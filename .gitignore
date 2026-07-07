@@ -1,6 +1,6 @@
 *.log
 .DS_Store
-# .env
+.env
 .env.backup
 .env.production
 .phpactor.json
@@ -13,6 +13,7 @@
 /.vscode
 /.zed
 /auth.json
+/database/dump.sql
 /node_modules
 /public/build
 /public/fonts-manifest.dev.json
