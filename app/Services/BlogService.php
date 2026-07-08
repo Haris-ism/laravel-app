@@ -1,23 +1,23 @@
 <?php
 
 namespace App\Services;
-use App\Models\Table1;
+use App\Models\Post;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 
 class BlogService
 {
-   public function createBlog(array $data): Table1
+   public function createBlog(array $data): Post
     {
-        return Table1::create($data);
+        return Post::create($data);
     }
 
    public function batchUpdate(array $data): void
     {
         DB::transaction(function () use ($data) {
             foreach ($data as $d) {
-                Table1::where('id', $d['id'])->update([
+                Post::where('id', $d['id'])->update([
                     'title'   => $d['title'],
                     'content' => $d['content'],
                 ]);
@@ -28,17 +28,17 @@ class BlogService
 
     public function getDataAll(int $perPage = 10): LengthAwarePaginator
     {
-        return Table1::orderBy('created_at', 'desc')->paginate($perPage);
+        return Post::orderBy('created_at', 'desc')->paginate($perPage);
     }
 
-    public function getByTitle(string $title): Table1
+    public function getByTitle(string $title): Post
     {
-        return Table1::where('title', $title)->firstOrFail();
+        return Post::where('title', $title)->firstOrFail();
     }
 
     public function getDetailByTitle(string $title): array
     {
-        return DB::select('SELECT * FROM table1 t1
+        return DB::select('SELECT * FROM posts t1
             JOIN table2 t2 ON t1.id = t2.content_id
             WHERE t1.title = ?', [$title]);
     }
