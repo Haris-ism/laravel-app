@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\BlogService;
 use App\Http\Resources\SingleBlogResource;
 use App\Http\Resources\MultiBlogResource;
+use App\Http\Resources\DetailBlogResource;
 use App\Http\Requests\CreateBlogRequest;
 use App\Http\Requests\BatchUpdateBlogRequest;
 use Illuminate\Http\Request;
@@ -33,8 +34,6 @@ class BlogController extends Controller
         
         try {
             $this->service->batchUpdate($request->validated()['blogs']);
-
-            
             return $this->successResponse(null, 'updated');
         } catch (\Exception $e) {
             Log::error('Error inserting record', ['error' => $e->getMessage()]);
@@ -81,18 +80,38 @@ class BlogController extends Controller
         }
     }
 
-    public function getDataDetail(Request $request, string $title)
+    public function getBlogDetailList()
     {
         try {
-            Log::info('Incoming request get blog detail');
+            Log::info('Incoming request get blog detail list');
 
-            $data = $this->service->getDetailByTitle($title);
-
+            $data = $this->service->getBlogDetailList();
+            
             if (empty($data)) {
                 return $this->errorResponse('Not found', 404);
             }
 
-            return $this->successResponse(new SingleBlogResource($data[0]));
+            return $this->successResponse(DetailBlogResource::collection($data));
+
+        } catch (\Exception $e) {
+            Log::error('Error fetching detail', ['error' => $e->getMessage()]);
+            return $this->errorResponse('failed');
+        }
+    }
+    public function getBlogDetail(string $title)
+    {
+        try {
+            Log::info('Incoming request get blog detail');
+
+            $data = $this->service->getBlogDetailByTitle($title);
+            
+            if (empty($data)) {
+                return $this->errorResponse('Not found', 404);
+            }
+
+            return $this->successResponse([
+                'blogs' => new DetailBlogResource($data),
+            ]);
         } catch (\Exception $e) {
             Log::error('Error fetching detail', ['error' => $e->getMessage()]);
             return $this->errorResponse('failed');
