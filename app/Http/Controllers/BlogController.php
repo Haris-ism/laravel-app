@@ -3,118 +3,84 @@
 namespace App\Http\Controllers;
 
 use App\Services\BlogService;
-use App\Http\Resources\SingleBlogResource;
-use App\Http\Resources\MultiBlogResource;
-use App\Http\Resources\DetailBlogResource;
 use App\Http\Requests\CreateBlogRequest;
-use App\Http\Requests\BatchUpdateBlogRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+
 
 class BlogController extends Controller
 {
     public function __construct(private BlogService $service) {}
 
-    public function createBlog(CreateBlogRequest $request)
+    public function index(Request $request)
     {
-        Log::info('Incoming request createBlog: ', $request->validated());
+        $perPage = $request->query('per_page', 5);
+        $data = $this->service->getDataAll($perPage);
 
-        try {
-            $data = $this->service->createBlog($request->validated());
-            return $this->successResponse(new SingleBlogResource($data), 'success', 201);
-        } catch (\Exception $e) {
-            Log::error('Error inserting record', ['error' => $e->getMessage()]);
-            return $this->errorResponse('failed');
-        }
+        return view('blog.index', ['data' => $data]);
     }
 
-    public function batchUpdateBlog(BatchUpdateBlogRequest $request)
+    public function manage()
     {
-        Log::info('Incoming request batchUpdateBlog: ', ['blogs'=>$request->validated()['blogs']]);
-        
-        try {
-            $this->service->batchUpdate($request->validated()['blogs']);
-            return $this->successResponse(null, 'updated');
-        } catch (\Exception $e) {
-            Log::error('Error inserting record', ['error' => $e->getMessage()]);
-            return $this->errorResponse('failed');
-        }
+        $data = $this->service->getDataAll(10);
+        $pending = session('pending_edits', []);
+
+        return view('blog.manage', ['data' => $data, 'pending' => $pending]);
     }
 
-    public function getBlogAll(Request $request)
+    public function show(string $title)
     {
-        try {
-            Log::info('Incoming request getBlogAll');
-
-            $perPage = $request->query('per_page', 10);
-            $data = $this->service->getDataAll($perPage);
-            return $this->successResponse([
-                'blogs'=>MultiBlogResource::collection($data),
-                'pagination' => [
-                    'total'        => $data->total(),
-                    'per_page'     => $data->perPage(),
-                    'current_page' => $data->currentPage(),
-                    'last_page'    => $data->lastPage(),
-                ],
-            ]);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return $this->errorResponse('Not found', 404);
-        } catch (\Exception $e) {
-            Log::error('Error fetching record', ['error' => $e->getMessage()]);
-            return $this->errorResponse('failed');
-        }
+        $data = $this->service->getBlogDetailByTitle($title);
+        return view('blog.detail', ['title' => $title, 'data' => $data]);
     }
 
-    public function getBlog(string $title)
+    public function create()
     {
-        try {
-            Log::info('Incoming request getBlog');
-
-            $data = $this->service->getByTitle($title);
-            return $this->successResponse(new SingleBlogResource($data));
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return $this->errorResponse('Not found', 404);
-        } catch (\Exception $e) {
-            Log::error('Error fetching record', ['error' => $e->getMessage()]);
-            return $this->errorResponse('failed');
-        }
+        return view('blog.create');
     }
 
-    public function getBlogDetailList()
+    public function store(CreateBlogRequest $request)
     {
-        try {
-            Log::info('Incoming request get blog detail list');
+        $this->service->createBlog($request->validated());
 
-            $data = $this->service->getBlogDetailList();
-            
-            if (empty($data)) {
-                return $this->errorResponse('Not found', 404);
-            }
-
-            return $this->successResponse(DetailBlogResource::collection($data));
-
-        } catch (\Exception $e) {
-            Log::error('Error fetching detail', ['error' => $e->getMessage()]);
-            return $this->errorResponse('failed');
-        }
+        return redirect()->route('blog.index')->with('status', '保存しました');
     }
-    public function getBlogDetail(string $title)
+
+    public function edit(int $id)
     {
-        try {
-            Log::info('Incoming request get blog detail');
+        $post = $this->service->getById($id);
+        $pending = session('pending_edits.' . $id);
 
-            $data = $this->service->getBlogDetailByTitle($title);
-            
-            if (empty($data)) {
-                return $this->errorResponse('Not found', 404);
-            }
-
-            return $this->successResponse([
-                'blogs' => new DetailBlogResource($data),
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error fetching detail', ['error' => $e->getMessage()]);
-            return $this->errorResponse('failed');
+        if ($pending) {
+            $post->title = $pending['title'];
+            $post->content = $pending['content'];
         }
+
+        return view('blog.edit', ['post' => $post]);
+    }
+
+    public function update(int $id, CreateBlogRequest $request)
+    {
+        $pending = session('pending_edits', []);
+        $pending[$id] = [
+            'id' => $id,
+            'title' => $request->validated()['title'],
+            'content' => $request->validated()['content'],
+        ];
+        session(['pending_edits' => $pending]);
+
+        return redirect()->route('blog.manage')->with('status', '変更をステージしました（Save Changes で反映されます）');
+    }
+
+    public function savePending()
+    {
+        $pending = session('pending_edits', []);
+
+        if (! empty($pending)) {
+            $this->service->batchUpdate(array_values($pending));
+            session()->forget('pending_edits');
+        }
+
+        return redirect()->route('blog.manage')->with('status', '保存しました');
     }
 }

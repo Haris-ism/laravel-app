@@ -14,6 +14,11 @@ class BlogService
         return Post::create($data);
     }
 
+   public function getById(int $id): Post
+    {
+        return Post::findOrFail($id);
+    }
+
    public function batchUpdate(array $data): void
     {
         DB::transaction(function () use ($data) {

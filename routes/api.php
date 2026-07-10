@@ -2,8 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PingController;
-use App\Http\Controllers\BlogController;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Api\BlogController;
+use App\Http\Controllers\Api\AuthController;
 
 Route::post('/ping', [PingController::class, 'ping']);
 Route::get('/blog', [BlogController::class, 'getBlogAll']);
