@@ -105,7 +105,7 @@ class BlogController extends Controller
 
             $data = $this->service->getBlogDetailByTitle($title);
             
-            if (empty($data)) {
+            if (!$data) {
                 return $this->errorResponse('Not found', 404);
             }
 
