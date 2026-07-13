@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 class BlogService
 {
+
    public function createBlog(array $data): Post
     {
         return Post::create($data);
@@ -33,13 +34,20 @@ class BlogService
 
     public function getByTitle(string $title): Post
     {
-        return Post::where('title', $title)->firstOrFail();
+        return Post::with('comments')->where('title', $title)->firstOrFail();
     }
 
-    public function getDetailByTitle(string $title): array
+    public function getBlogDetailByTitle(string $title): Post|null
     {
-        return DB::select('SELECT * FROM posts t1
-            JOIN table2 t2 ON t1.id = t2.content_id
-            WHERE t1.title = ?', [$title]);
+        $post = Post::with('comments')->where('title', $title)->first();
+
+        return $post;
+    }
+
+    public function getBlogDetailList(): array|object
+    {
+        $posts = Post::with('comments')->get();
+
+        return $posts->all();
     }
 }
