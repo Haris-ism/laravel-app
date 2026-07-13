@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('posts')) {
-            Schema::create('posts', function (Blueprint $table) {
+        if (!Schema::hasTable('comments')) {
+            Schema::create('comments', function (Blueprint $table) {
                 $table->id();
+                $table->foreignId('post_id')->constrained('posts');
                 $table->string('title');
-                $table->text('content');
+                $table->text('comment');
                 $table->timestamps();
             });
         }
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('posts');
+        Schema::dropIfExists('comments');
     }
 };

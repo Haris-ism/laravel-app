@@ -24,7 +24,7 @@ class BatchUpdateBlogRequest extends FormRequest
     {
         return [
             'blogs'           => 'required|array',
-            'blogs.*.id'      => 'required|integer|exists:table1,id',
+            'blogs.*.id'      => 'required|integer|exists:posts,id',
             'blogs.*.title'   => 'required|string|max:255',
             'blogs.*.content' => 'required|string',
         ];
