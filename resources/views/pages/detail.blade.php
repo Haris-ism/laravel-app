@@ -9,8 +9,8 @@
             <!-- Error -->
             <div id="error" class="bg-red-50 border border-red-100 rounded-2xl p-10 text-center">
                 <div class="text-5xl mb-4">404</div>
-                <p class="text-red-700 font-semibold text-lg mb-2">Article not found</p>
-                <p class="text-red-400 text-sm mb-6">The article you're looking for doesn't exist or has been removed.</p>
+                <p class="text-red-700 font-semibold text-lg mb-2">Blog not found</p>
+                <p class="text-red-400 text-sm mb-6">The blog you're looking for doesn't exist or has been removed.</p>
                 <a href="/blog" class="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-700 transition-colors">
                     ← Back to Blog
                 </a>
@@ -39,10 +39,30 @@
                 <!-- Content -->
                 <div id="post-content" class="text-gray-600 text-lg leading-relaxed whitespace-pre-line">{{ $data->content}}</div>
 
+                <div class="mt-16 pt-10 border-t border-gray-100">
+                    <h2 class="text-lg font-bold text-gray-900 mb-6">
+                        Comments ({{ $data->comments->count() }})
+                    </h2>
+
+                    @if ($data->comments->isEmpty())
+                        <p class="text-gray-400 text-sm">No comments yet.</p>
+                    @else
+                        <div class="space-y-4">
+                            @foreach ($data->comments as $comment)
+                                <div class="bg-gray-50 border border-gray-100 rounded-xl p-5">
+                                    <p class="text-sm font-semibold text-gray-900 mb-1">{{ $comment->title }}</p>
+                                    <p class="text-sm text-gray-600 leading-relaxed">{{ $comment->comment }}</p>
+                                    <p class="text-xs text-gray-400 mt-2">{{ $comment->created_at?->format('F j, Y') }}</p>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+
                 <!-- Footer -->
                 <div class="mt-16 pt-10 border-t border-gray-100 flex items-center justify-between">
                     <a href="/blog" class="inline-flex items-center gap-2 text-sm font-semibold text-gray-900 hover:underline">
-                        ← Back to articles
+                        ← Back to blogs
                     </a>
                     <span class="text-xs text-gray-400">The Blog</span>
                 </div>

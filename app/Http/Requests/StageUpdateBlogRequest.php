@@ -5,9 +5,9 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class CreateBlogRequest extends FormRequest
+class StageUpdateBlogRequest extends FormRequest
 {
-    protected $errorBag = 'create';
+    protected $errorBag = 'stageUpdate';
 
     /**
      * Determine if the user is authorized to make this request.

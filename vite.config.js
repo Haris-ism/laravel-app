@@ -9,8 +9,6 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
-                'resources/js/pages/blog.js',
-                'resources/js/pages/blog-detail.js',
                 'resources/js/pages/blog-manage.js',
             ],
             refresh: true,

@@ -11,73 +11,28 @@
     @endif
     {{ $head ?? '' }}
 </head>
-<body class="bg-stone-50 min-h-screen" style="font-family: 'Inter', sans-serif;"
-    data-require-auth="{{ isset($requireAuth) && $requireAuth ? 'true' : 'false' }}">
+<body class="bg-stone-50 min-h-screen" style="font-family: 'Inter', sans-serif;">
 
     <x-navbar/>
 
+    @if (session('status') || session('error'))
+        <div id="snackbar"
+            class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium transition-opacity duration-500 {{ session('status') ? 'bg-green-600 text-white' : 'bg-red-600 text-white' }}">
+            {{ session('status') ?? session('error') }}
+        </div>
+    @endif
+
     {{ $slot }}
 
-    {{-- Login Modal --}}
-    <x-modal id="login-modal" title="Welcome back" on-close="closeLoginModal">
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
-                <input id="login-email" type="email" placeholder="you@example.com"
-                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition">
-            </div>
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
-                <input id="login-password" type="password" placeholder="••••••••"
-                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition">
-            </div>
-            <p id="login-error" class="text-red-500 text-xs font-medium"></p>
-        </div>
+    <x-modals.modal id="login-modal" title="Welcome back" on-close="closeLoginModal"
+        data-autoopen="{{ ($errors->login->has('email') || $errors->login->has('password')) ? 'true' : 'false' }}">
+        <x-modals.login/>
+    </x-modals.modal>
 
-        <x-slot:footer>
-            <button onclick="closeLoginModal()"
-                class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
-                Cancel
-            </button>
-            <button id="login-submit" onclick="submitLogin()"
-                class="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-700 transition-colors">
-                Login
-            </button>
-        </x-slot:footer>
-    </x-modal>
-
-    {{-- Register Modal --}}
-    <x-modal id="register-modal" title="Create an account" on-close="closeRegisterModal">
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Name</label>
-                <input id="register-name" type="text" placeholder="Your name"
-                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition">
-            </div>
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
-                <input id="register-email" type="email" placeholder="you@example.com"
-                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition">
-            </div>
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
-                <input id="register-password" type="password" placeholder="Min. 8 characters"
-                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition">
-            </div>
-            <p id="register-error" class="text-red-500 text-xs font-medium"></p>
-        </div>
-
-        <x-slot:footer>
-            <button onclick="closeRegisterModal()"
-                class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
-                Cancel
-            </button>
-            <button id="register-submit" onclick="submitRegister()"
-                class="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-700 transition-colors">
-                Register
-            </button>
-        </x-slot:footer>
-    </x-modal>
+    <x-modals.modal id="register-modal" title="Create an account" on-close="closeRegisterModal"
+        data-autoopen="{{ ($errors->register->has('name') || $errors->register->has('email') || $errors->register->has('password')) ? 'true' : 'false' }}">
+        <x-modals.register/>
+    </x-modals.modal>
 
 </body>
 </html>

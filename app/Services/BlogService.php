@@ -3,182 +3,131 @@
 namespace App\Services;
 use App\Models\Post;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Log;
+
 use Illuminate\Support\Facades\DB;
 
 
 class BlogService
 {
 
-   public function createBlog(array $data): Post
+   public function createBlog(array $data): bool
     {
-        return Post::create($data);
+        try{
+            Post::create($data);
+        }catch(\Throwable $e){
+            Log::error("createBlog error: ",['error:'=>$e->getMessage()]);
+            return false;
+        }
+        return true;
     }
 
-   public function getById(int $id): Post
+   public function batchUpdate(): bool
     {
-        return Post::findOrFail($id);
+        $pending = session('pending_edits', []);
+
+        if (empty($pending)) {
+            return true;
+        }
+        try {
+            DB::transaction(function () use ($pending) {
+                foreach ($pending as $p) {
+                    Post::where('id', $p['id'])->update([
+                        'title'   => $p['title'],
+                        'content' => $p['content'],
+                    ]);
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error("batchUpdate error: ",['error:'=>$e->getMessage()]);
+            return false;
+        }
+        session()->forget('pending_edits');
+        return true;
     }
 
-   public function batchUpdate(array $data): void
+
+    public function getDataAll(int $perPage = 10): LengthAwarePaginator|null
     {
-        DB::transaction(function () use ($data) {
-            foreach ($data as $d) {
-                Post::where('id', $d['id'])->update([
-                    'title'   => $d['title'],
-                    'content' => $d['content'],
-                ]);
-            }
-        });
+        try{
+            $post=Post::orderBy('created_at', 'desc')->paginate($perPage);
+        }catch(\Throwable $e){
+            Log::error("getDataAll error: ",['error:'=>$e->getMessage()]);
+            return null;
+        }
+        return $post;
     }
 
-
-    public function getDataAll(int $perPage = 10): LengthAwarePaginator
+    public function getBlogDetailByTitle(string $title): Post|null
     {
-        return Post::orderBy('created_at', 'desc')->paginate($perPage);
-    }
-
-    public function getByTitle(string $title): Post
-    {
-        return Post::with('comments')->where('title', $title)->firstOrFail();
-    }
-
-    public function getBlogDetailByTitle(string $title): array|object
-    {
-        // eloquent with() version
-        $post = Post::with('comments')->where('title', $title)->first();
-
-        return $post ?? [];
-
-        // // eloquent join version
-        // $rows=Post::query()
-        // ->leftJoin('comments','comments.post_id','=','posts.id')
-        // ->where('posts.title',$title)
-        // ->select(
-        //     'posts.id',
-        //     'posts.title',
-        //     'posts.content',
-        //     'posts.created_at',
-        //     'comments.id as comment_id',
-        //     'comments.post_id',
-        //     'comments.comment',
-        //     'comments.created_at as comment_created_at',
-        // )
-        // ->get();
-
-        // if ($rows->isEmpty()) {
-        //     return [];
-        // }
-
-        // //since title is unique, it is guaranteed datas[0] is always the same
-        // $result= (object)[
-        //     'id'=>$rows[0]->id,
-        //     'title'=>$rows[0]->title,
-        //     'content'=>$rows[0]->content,
-        //     'created_at'=>$rows[0]->created_at,
-        // ];
-
-        // foreach ($rows as $data){
-        //     $result->comments[]=[
-        //         'id'=>$data->comment_id,
-        //         'comment'=>$data->comment,
-        //         'created_at'=>$data->comment_created_at,
-        //         'post_id'=>$data->post_id,
-        //     ];
-        // };
-
-        // return $result;
+        try {
+            $post=Post::with('comments')->where('title', $title)->firstOrFail();
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error("getBlogDetailByTitle error: ",['error:'=>$e->getMessage()]);
+            return null;
+        }
+        return $post;
     }
 
     public function getBlogDetailList(): array|object
     {
-        // // raw sql version
-        // $rows = DB::select('SELECT
-        //         p.id, p.title, p.content, p.created_at,
-        //         c.id AS comment_id, c.post_id AS comment_post_id, c.comment AS comment
-        //     FROM posts p
-        //     LEFT JOIN comments c ON p.id = c.post_id');
-
-        // $result = [];
-
-        // foreach ($rows as $row) {
-        //     if (! isset($result[$row->id])) {
-        //         $result[$row->id] = (object) [
-        //             'id'         => $row->id,
-        //             'title'      => $row->title,
-        //             'content'    => $row->content,
-        //             'created_at' => $row->created_at,
-        //             'comments'   => [],
-        //         ];
-        //     }
-
-        //     if (! is_null($row->comment_id)) {
-        //         $result[$row->id]->comments[] = [
-        //             'comment_id'=>$row->comment_id,
-        //             'comment' => $row->comment,
-        //             'post_id' => $row->comment_post_id,
-        //         ];
-        //     }
-        // }
-
-        // return array_values($result);
-
-        //=======================================
-
-        // // eloquent join version
-        // $rows = Post::query()
-        //     ->leftJoin('comments', 'comments.post_id', '=', 'posts.id')
-        //     ->select(
-        //         'posts.id',
-        //         'posts.title',
-        //         'posts.content',
-        //         'posts.created_at',
-        //         'comments.id as comment_id',
-        //         'comments.post_id as comment_post_id',
-        //         'comments.comment as comment',
-        //     )
-        //     ->get();
-
-        // if ($rows->isEmpty()) {
-        //     return [];
-        // }
-        // $result = [];
-
-        // foreach ($rows as $row) {
-        //     if (! isset($result[$row->id])) {
-        //         $result[$row->id] = (object) [
-        //             'id'         => $row->id,
-        //             'title'      => $row->title,
-        //             'content'    => $row->content,
-        //             'created_at' => $row->created_at,
-        //             'comments'   => [],
-        //         ];
-        //     }
-
-        //     if (! is_null($row->comment_id)) {
-        //         $result[$row->id]->comments[] = [
-        //             'comment' => $row->comment,
-        //             'post_id' => $row->comment_post_id,
-        //         ];
-        //     }
-        // }
-        // return array_values($result);
-
-
-        //=======================================
-        // // N+1 problem
-        // $posts = Post::get(); 
-
-        // foreach ($posts as $post) {
-        //     //silently query again
-        //     $post->comments; 
-        // }
-
-        // return $posts->all();
-
-        //=======================================
         // // eloquent with() version
         $posts = Post::with('comments')->get();
 
         return $posts->all();
+    }
+
+    public function updatePage(int $id): Post|null
+    {
+        try{
+            $post=Post::findOrFail($id);
+            $pending = session('pending_edits.' . $id);
+    
+            if ($pending) {
+                $post->title = $pending['title'];
+                $post->content = $pending['content'];
+            }
+        }catch(\Throwable $e){
+            Log::error("updatePage error: ",['error:'=>$e->getMessage()]);
+            return null;
+        }
+
+        return $post;
+    }
+
+    public function updateStage(int $id, array $data): bool
+    {
+        try{
+            Post::findOrFail($id);
+
+            $pending = session('pending_edits', []);
+            $pending[$id] = [
+                'id' => $id,
+                'title' => $data['title'],
+                'content' => $data['content'],
+            ];
+
+            session(['pending_edits' => $pending]);
+        }catch (\Throwable $e) {
+            Log::error("updateStage error: ",['error:'=>$e->getMessage()]);
+            return false;
+        }
+
+        return true;
+    }
+    public function blogManagePage(): array|null
+    {
+        try{
+            $data = Post::orderBy('created_at', 'desc')->paginate(10);
+            $pending = session('pending_edits', []);
+        }catch(\Throwable $e) {
+            Log::error("blogManagePage error: ",['error:'=>$e->getMessage()]);
+            return null;
+        }
+
+        return [
+            'data'=>$data,
+            'pending'=>$pending,
+        ];
     }
 }
