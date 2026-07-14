@@ -35,12 +35,16 @@
                                 <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Title</th>
                                 <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Content</th>
                                 <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">Created At</th>
-                                <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">Action</th>
+                                <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Author</th>
+                                <th class="px-6 py-3.5 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
                         <tbody id="table-body">
                             @foreach ($data as $post)
-                                @php $edit = $pending[$post->id] ?? null; @endphp
+                                @php
+                                    $edit = $pending[$post->id] ?? null;
+                                    $canEdit = $post->user_id === auth()->id();
+                                @endphp
                                 <tr id="row-{{ $post->id }}" class="border-b border-gray-100 hover:bg-gray-50 transition-colors {{ $edit ? 'bg-amber-50' : '' }}">
                                     <td class="px-6 py-4 text-sm text-gray-400 w-12">{{$post->id}}</td>
                                     <td class="px-6 py-4">
@@ -53,11 +57,24 @@
                                         <span id="content-{{ $post->id }}" class="text-sm text-gray-500 line-clamp-2">{{ $edit['content'] ?? $post->content }}</span>
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-400 whitespace-nowrap">{{ $post->created_at?->format('F j, Y') }}</td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button data-open-edit="{{ $post->id }}"
-                                            class="text-xs font-semibold text-gray-900 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-                                            Edit
-                                        </button>
+                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $post->author->name }}</td>
+                                    <td class="px-6 py-4 text-center">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <button @if ($canEdit) data-open-edit="{{ $post->id }}" @endif
+                                                @disabled(! $canEdit)
+                                                class="text-xs font-semibold text-gray-900 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent">
+                                                Edit
+                                            </button>
+                                            <form method="POST" action="{{ route('blog.deleteBlog', $post->id) }}"
+                                                onsubmit="return confirm('Confirm Delete Blog Post?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" @disabled(! $canEdit)
+                                                    class="text-xs font-semibold text-red-600 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 <x-modals.modal id="edit-modal-{{ $post->id }}" title="Edit Post" on-close="closeEditModal"
