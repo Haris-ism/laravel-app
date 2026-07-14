@@ -29,7 +29,7 @@ class BlogController extends Controller
             Log::error("blogPage error: ",['error:'=>$e->getMessage()]);
             return redirect()->route('blog.blogPage')->with('error', 'Something went wrong');
         }
-
+        
         return view('pages.index', ['data' => $data]);
     }
 
@@ -89,20 +89,14 @@ class BlogController extends Controller
     {
         try {
             $post = $this->service->getBlogById($id);
+            $this->authorize('delete', $post);
+            $this->service->deleteBlog($post);
         } catch (ModelNotFoundException $e) {
             Log::error("deleteBlog not found error: ",['error:'=>$e->getMessage()]);
             return redirect()->route('blog.blogManagePage')->with('error', 'Blog post not found.');
-        }
-
-        try {
-            $this->authorize('delete', $post);
         } catch (AuthorizationException $e) {
             Log::error("deleteBlog unauthorized error: ",['error:'=>$e->getMessage()]);
             return redirect()->route('blog.blogManagePage')->with('error', 'Unauthorized user');
-        }
-
-        try {
-            $this->service->deleteBlog($post);
         } catch (QueryException $e) {
             Log::error("deleteBlog query error: ",['error:'=>$e->getMessage()]);
             return redirect()->route('blog.blogManagePage')->with('error', 'Something went wrong.');
@@ -115,15 +109,18 @@ class BlogController extends Controller
     {
         try {
             $post = $this->service->updatePage($id);
+            $this->authorize('update', $post);
         } catch (ModelNotFoundException $e) {
             Log::error("updatePage not found error: ",['error:'=>$e->getMessage()]);
             return redirect()->route('blog.blogManagePage')->with('error', 'Blog post not found');
+        } catch (AuthorizationException $e) {
+            Log::error("deleteBlog unauthorized error: ",['error:'=>$e->getMessage()]);
+            return redirect()->route('blog.blogManagePage')->with('error', 'Unauthorized user');
         } catch (QueryException $e) {
             Log::error("updatePage query error: ",['error:'=>$e->getMessage()]);
             return redirect()->route('blog.blogManagePage')->with('error', 'Something went wrong.');
         }
 
-        $this->authorize('update', $post);
 
         return view('components.modals.edit', ['post' => $post]);
     }
@@ -132,15 +129,14 @@ class BlogController extends Controller
     {
         try {
             $post = $this->service->getBlogById($id);
+            $this->authorize('update', $post);
+            $this->service->updateStage($post, $request->validated());
         } catch (ModelNotFoundException $e) {
             Log::error("updateStage not found error: ",['error:'=>$e->getMessage()]);
             return redirect()->route('blog.blogManagePage')->with('error', 'Blog post not found.');
-        }
-
-        $this->authorize('update', $post);
-
-        try {
-            $this->service->updateStage($post, $request->validated());
+        } catch (AuthorizationException $e) {
+            Log::error("deleteBlog unauthorized error: ",['error:'=>$e->getMessage()]);
+            return redirect()->route('blog.blogManagePage')->with('error', 'Unauthorized user');
         } catch (QueryException $e) {
             Log::error("updateStage query error: ",['error:'=>$e->getMessage()]);
             return redirect()->route('blog.blogManagePage')->with('error', 'Something went wrong. Please try again.');
@@ -156,7 +152,7 @@ class BlogController extends Controller
         } catch (QueryException $e) {
             Log::error("batchUpdate query error: ",['error:'=>$e->getMessage()]);
             return redirect()->route('blog.blogManagePage')->with('error', 'Something went wrong. Please try again.');
-        }
+        } 
 
         return redirect()->route('blog.blogManagePage')->with('status', 'Blog post updated');
     }
