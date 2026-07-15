@@ -25,9 +25,9 @@ class BatchUpdateBlogRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'blogs'           => 'required|array',
-            'blogs.*.id'      => 'required|integer|exists:posts,id',
-            'blogs.*.title'   => 'required|string|max:255',
+            'blogs' => 'required|array',
+            'blogs.*.id' => 'required|integer|exists:posts,id',
+            'blogs.*.title' => 'required|string|max:255',
             'blogs.*.content' => 'required|string',
         ];
     }

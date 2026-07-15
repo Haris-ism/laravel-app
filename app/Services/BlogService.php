@@ -1,28 +1,32 @@
 <?php
 
 namespace App\Services;
+
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
-
 use Illuminate\Support\Facades\DB;
-
 
 class BlogService
 {
+    public function getUser(int $id): Post
+    {
+        return User::findOrFail($id);
+    }
 
-   public function createBlog(array $data): Post
+    public function createBlog(array $data): Post
     {
         User::findOrFail($data['user_id']);
 
         return Post::create($data);
     }
-   public function deleteBlog(Post $post): bool
+
+    public function deleteBlog(Post $post): bool
     {
         return $post->delete();
     }
 
-   public function batchUpdate(): void
+    public function batchUpdate(): void
     {
         $pending = session('pending_edits', []);
 
@@ -33,7 +37,7 @@ class BlogService
         DB::transaction(function () use ($pending) {
             foreach ($pending as $p) {
                 Post::where('id', $p['id'])->update([
-                    'title'   => $p['title'],
+                    'title' => $p['title'],
                     'content' => $p['content'],
                 ]);
             }
@@ -41,7 +45,6 @@ class BlogService
 
         session()->forget('pending_edits');
     }
-
 
     public function getDataAll(int $perPage = 10): LengthAwarePaginator
     {
@@ -64,7 +67,7 @@ class BlogService
     public function updatePage(int $id): Post
     {
         $post = Post::findOrFail($id);
-        $pending = session('pending_edits.' . $id);
+        $pending = session('pending_edits.'.$id);
 
         if ($pending) {
             $post->title = $pending['title'];
@@ -92,8 +95,8 @@ class BlogService
         $pending = session('pending_edits', []);
 
         return [
-            'data'=>$data,
-            'pending'=>$pending,
+            'data' => $data,
+            'pending' => $pending,
         ];
     }
 

@@ -22,7 +22,7 @@ class CommentFactory extends Factory
         return [
             'post_id' => Post::factory(),
             'user_id' => User::factory(),
-            'title'   => fake()->sentence(),
+            'title' => fake()->sentence(),
             'comment' => fake()->sentence(),
         ];
     }
