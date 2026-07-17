@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Services\BlogService;
 use App\Http\Requests\CreateBlogRequest;
-use App\Http\Requests\BatchUpdateBlogRequest;
 use App\Http\Requests\StageUpdateBlogRequest;
 use Illuminate\Http\Request;
 
@@ -50,25 +49,12 @@ class BlogController extends Controller
         return view('pages.detail', ['title' => $title, 'data' => $data]);
     }
 
-    public function createBlogPage()
-    {
-        return view('components.modals.create');
-    }
-
     public function createBlog(CreateBlogRequest $request)
     {
         if (!$this->service->createBlog($request->validated())){
             return redirect()->route('blog.blogManagePage')->with('error', 'Something went wrong');
         }
         return redirect()->route('blog.blogManagePage')->with('status', 'Blog post created');
-    }
-
-    public function updatePage(int $id)
-    {
-        if (!$post = $this->service->updatePage($id)){
-            return redirect()->route('blog.blogManagePage')->with('error', 'Something went wrong');
-        }
-        return view('components.modals.edit', ['post' => $post]);
     }
 
     public function updateStage(int $id, StageUpdateBlogRequest $request)

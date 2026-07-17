@@ -29,6 +29,23 @@ class BlogService
         if (empty($pending)) {
             return true;
         }
+
+        $postId = Post::whereIn('id', array_column($pending, 'id'))->pluck('id')->all();
+        $pendingFailed=[];
+        foreach ($pending as $p) {
+            if (!in_array($p['id'], $postId)) {
+                //$pending[$p] key will always the same as $p['id'] since it is defined on update stage
+                unset($pending[$p['id']]);
+                $pendingFailed[]=$p['id'];
+            }
+        }
+
+        if (count($pendingFailed)>0){
+            Log::error('failed to batchUpdate id: ', ['id' => $pendingFailed]);
+            session(['pending_edits' => $pending]);
+            return false;
+        }
+
         try {
             DB::transaction(function () use ($pending) {
                 foreach ($pending as $p) {
@@ -77,24 +94,6 @@ class BlogService
         return $posts->all();
     }
 
-    public function updatePage(int $id): Post|null
-    {
-        try{
-            $post=Post::findOrFail($id);
-            $pending = session('pending_edits.' . $id);
-    
-            if ($pending) {
-                $post->title = $pending['title'];
-                $post->content = $pending['content'];
-            }
-        }catch(\Throwable $e){
-            Log::error("updatePage error: ",['error:'=>$e->getMessage()]);
-            return null;
-        }
-
-        return $post;
-    }
-
     public function updateStage(int $id, array $data): bool
     {
         try{
@@ -103,8 +102,8 @@ class BlogService
             $pending = session('pending_edits', []);
             $pending[$id] = [
                 'id' => $id,
-                'title' => $data['title'],
-                'content' => $data['content'],
+                'title' => $data['edit']['title'][$id],
+                'content' => $data['edit']['content'][$id],
             ];
 
             session(['pending_edits' => $pending]);
