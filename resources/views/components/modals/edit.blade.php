@@ -5,18 +5,19 @@
 
     <div>
         <label for="title" class="block text-sm font-semibold text-gray-700 mb-1.5">Title</label>
-        <input id="title" name="title" type="text" value="{{ old('title', $post->title) }}"
+        <input id="title" name="edit[title][{{ $post->id }}]" type="text"
+            value="{{ old('edit.title.' . $post->id, $post->title) }}"
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition">
-        @error('title','stageUpdate')
+        @error('edit.title.' . $post->id, 'stageUpdate')
             <p class="text-red-500 text-xs font-medium mt-1.5">{{ $message }}</p>
         @enderror
     </div>
 
     <div>
         <label for="content" class="block text-sm font-semibold text-gray-700 mb-1.5">Content</label>
-        <textarea id="content" name="content" rows="8"
-            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition resize-none">{{ old('content', $post->content) }}</textarea>
-        @error('content','stageUpdate')
+        <textarea id="content" name="edit[content][{{ $post->id }}]" rows="8"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition resize-none">{{ old('edit.content.' . $post->id, $post->content) }}</textarea>
+        @error('edit.content.' . $post->id, 'stageUpdate')
             <p class="text-red-500 text-xs font-medium mt-1.5">{{ $message }}</p>
         @enderror
     </div>

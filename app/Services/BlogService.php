@@ -4,8 +4,8 @@ namespace App\Services;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
-
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 
 class BlogService
@@ -28,6 +28,21 @@ class BlogService
 
         if (empty($pending)) {
             return;
+        }
+
+        $postId = Post::whereIn('id', array_column($pending, 'id'))->pluck('id')->all();
+        $pendingFailed=[];
+        foreach ($pending as $p) {
+            if (!in_array($p['id'], $postId)) {
+                //$pending[$p] key will always the same as $p['id'] since it is defined on update stage
+                unset($pending[$p['id']]);
+                $pendingFailed[]=$p['id'];
+            }
+        }
+
+        if (count($pendingFailed)>0){
+            session(['pending_edits' => $pending]);
+            throw new \RuntimeException('Some staged posts no longer exist: ' . implode(',', $pendingFailed));
         }
 
         DB::transaction(function () use ($pending) {
@@ -53,34 +68,13 @@ class BlogService
         return Post::with('comments')->where('title', $title)->firstOrFail();
     }
 
-    public function getBlogDetailList(): array|object
-    {
-        // // eloquent with() version
-        $posts = Post::with('comments')->get();
-
-        return $posts->all();
-    }
-
-    public function updatePage(int $id): Post
-    {
-        $post = Post::findOrFail($id);
-        $pending = session('pending_edits.' . $id);
-
-        if ($pending) {
-            $post->title = $pending['title'];
-            $post->content = $pending['content'];
-        }
-
-        return $post;
-    }
-
     public function updateStage(Post $post, array $data): void
     {
         $pending = session('pending_edits', []);
         $pending[$post->id] = [
             'id' => $post->id,
-            'title' => $data['title'],
-            'content' => $data['content'],
+            'title' => $data['edit']['title'][$post->id],
+            'content' => $data['edit']['content'][$post->id],
         ];
 
         session(['pending_edits' => $pending]);

@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Services\BlogService;
 use Illuminate\Auth\Access\AuthorizationException;
 use App\Http\Requests\CreateBlogRequest;
-use App\Http\Requests\BatchUpdateBlogRequest;
 use Illuminate\Support\Facades\Log;
 use App\Http\Requests\StageUpdateBlogRequest;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -60,11 +59,6 @@ class BlogController extends Controller
         return view('pages.detail', ['title' => $title, 'data' => $data]);
     }
 
-    public function createBlogPage()
-    {
-        return view('components.modals.create');
-    }
-
     public function createBlog(CreateBlogRequest $request)
     {
         $data = [...$request->validated(), 'user_id' => $request->user()->id];
@@ -105,26 +99,6 @@ class BlogController extends Controller
         return redirect()->route('blog.blogManagePage')->with('status', 'Blog post deleted');
     }
 
-    public function updatePage(int $id)
-    {
-        try {
-            $post = $this->service->updatePage($id);
-            $this->authorize('update', $post);
-        } catch (ModelNotFoundException $e) {
-            Log::error("updatePage not found error: ",['error:'=>$e->getMessage()]);
-            return redirect()->route('blog.blogManagePage')->with('error', 'Blog post not found');
-        } catch (AuthorizationException $e) {
-            Log::error("deleteBlog unauthorized error: ",['error:'=>$e->getMessage()]);
-            return redirect()->route('blog.blogManagePage')->with('error', 'Unauthorized user');
-        } catch (QueryException $e) {
-            Log::error("updatePage query error: ",['error:'=>$e->getMessage()]);
-            return redirect()->route('blog.blogManagePage')->with('error', 'Something went wrong.');
-        }
-
-
-        return view('components.modals.edit', ['post' => $post]);
-    }
-
     public function updateStage(int $id, StageUpdateBlogRequest $request)
     {
         try {
@@ -152,7 +126,10 @@ class BlogController extends Controller
         } catch (QueryException $e) {
             Log::error("batchUpdate query error: ",['error:'=>$e->getMessage()]);
             return redirect()->route('blog.blogManagePage')->with('error', 'Something went wrong. Please try again.');
-        } 
+        } catch (\RuntimeException $e) {
+            Log::error('failed to batchUpdate id: ', ['error:'=>$e->getMessage()]);
+            return redirect()->route('blog.blogManagePage')->with('error', $e->getMessage());
+        }
 
         return redirect()->route('blog.blogManagePage')->with('status', 'Blog post updated');
     }

@@ -78,7 +78,7 @@
                                     </td>
                                 </tr>
                                 <x-modals.modal id="edit-modal-{{ $post->id }}" title="Edit Post" on-close="closeEditModal"
-                                    data-autoopen="{{ ($errors->stageUpdate->has('title') || $errors->stageUpdate->has('content')) ? 'true' : 'false' }}">
+                                    data-autoopen="{{ ($errors->stageUpdate->has('edit.title.' . $post->id) || $errors->stageUpdate->has('edit.content.' . $post->id)) ? 'true' : 'false' }}">
                                     <x-modals.edit :post="$post"/>
                                 </x-modals.modal>
                             @endforeach
