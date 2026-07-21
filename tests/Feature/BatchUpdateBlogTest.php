@@ -97,4 +97,85 @@ class BatchUpdateBlogTest extends TestCase
             ]);
         }
     }
+
+    public function test_batch_update_unauthenticated(): void
+    {
+        $user = User::factory()->create();
+        for ($i = 0; $i < 2; $i++) {
+            Post::factory()->create([
+                'user_id' => $user->id,
+                'title' => 'title test'.$i,
+                'content' => 'content test1'.$i,
+            ]);
+        }
+
+        $posts = Post::get();
+        $pending = [];
+
+        foreach ($posts as $post) {
+            $pending[$post->id] = [
+                'id' => $post->id,
+                'title' => $post->title.' update',
+                'content' => $post->content.' update',
+            ];
+        }
+
+        $response = $this
+            ->withSession(['pending_edits' => $pending])
+            ->post(route('blog.batchUpdate'));
+
+        $response->assertRedirect(route('blog.blogPage'));
+
+        $this->assertGuest();
+        $response->assertSessionHas('url.intended');
+        foreach ($pending as $data) {
+            $this->assertDatabaseMissing('posts', [
+                'id' => $data['id'],
+                'title' => $data['title'],
+                'content' => $data['content'],
+            ]);
+        }
+    }
+
+    public function test_batch_update_invalid_pending_data(): void
+    {
+        $user = User::factory()->create();
+        for ($i = 0; $i < 2; $i++) {
+            Post::factory()->create([
+                'user_id' => $user->id,
+                'title' => 'title test'.$i,
+                'content' => 'content test1'.$i,
+            ]);
+        }
+
+        $posts = Post::get();
+        $pending = [];
+
+        foreach ($posts as $post) {
+            $pending[$post->id] = [
+                'id' => $post->id,
+                'title' => $post->title.' update',
+                'content' => $post->content.' update',
+            ];
+        }
+        $pending[99999] = [
+            'id' => 99999,
+            'title' => 'invalid title',
+            'content' => 'invalid content',
+        ];
+
+        $response = $this->actingAs($user)
+            ->withSession(['pending_edits' => $pending])
+            ->post(route('blog.batchUpdate'));
+        $response->assertSessionHas('error');
+        $response->assertRedirect(route('blog.blogManagePage'));
+
+        foreach ($pending as $data) {
+            $this->assertDatabaseMissing('posts', [
+                'id' => $data['id'],
+                'title' => $data['title'],
+                'content' => $data['content'],
+            ]);
+        }
+    }
 }

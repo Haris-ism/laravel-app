@@ -20,8 +20,10 @@ class UpdateBlogStageTest extends TestCase
         $post = Post::factory()->create(['user_id' => $user->id]);
 
         $input = [
-            'title' => $post->title.'test',
-            'content' => $post->content.'test',
+            'edit' => [
+                'title' => [$post->id => $post->title.'test'],
+                'content' => [$post->id => $post->content.'test'],
+            ],
         ];
 
         $response = $this->actingAs($user)->put(route('blog.updateStage', $post->id), $input);
@@ -30,8 +32,8 @@ class UpdateBlogStageTest extends TestCase
 
         $response->assertSessionHas('pending_edits.'.$post->id, [
             'id' => $post->id,
-            'title' => $input['title'],
-            'content' => $input['content'],
+            'title' => $input['edit']['title'][$post->id],
+            'content' => $input['edit']['content'][$post->id],
         ]);
 
     }
@@ -44,8 +46,10 @@ class UpdateBlogStageTest extends TestCase
         $user2 = User::factory()->create();
 
         $input = [
-            'title' => $post->title.'test',
-            'content' => $post->content.'test',
+            'edit' => [
+                'title' => [$post->id => $post->title.'test'],
+                'content' => [$post->id => $post->content.'test'],
+            ],
         ];
 
         $response = $this->actingAs($user2)->put(route('blog.updateStage', $post->id), $input);
@@ -53,5 +57,24 @@ class UpdateBlogStageTest extends TestCase
         $response->assertRedirect(route('blog.blogManagePage'));
         $response->assertSessionHas('error', 'Unauthorized user');
 
+    }
+
+    public function test_update_stage_unauthenticated(): void
+    {
+        $user = User::factory()->create();
+        $post = Post::factory()->create(['user_id' => $user->id]);
+
+        $input = [
+            'edit' => [
+                'title' => [$post->id => $post->title.'test'],
+                'content' => [$post->id => $post->content.'test'],
+            ],
+        ];
+
+        $response = $this->put(route('blog.updateStage', $post->id), $input);
+
+        $response->assertRedirect(route('blog.blogPage'));
+        $this->assertGuest();
+        $response->assertSessionHas('url.intended');
     }
 }

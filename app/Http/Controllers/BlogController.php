@@ -138,7 +138,8 @@ class BlogController extends Controller
 
             return redirect()->route('blog.blogManagePage')->with('error', 'Something went wrong. Please try again.');
         } catch (\RuntimeException $e) {
-            Log::error('failed to batchUpdate id: ', ['error:'=>$e->getMessage()]);
+            Log::error('failed to batchUpdate id: ', ['error:' => $e->getMessage()]);
+
             return redirect()->route('blog.blogManagePage')->with('error', $e->getMessage());
         }
 

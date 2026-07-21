@@ -7,14 +7,8 @@ use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
-
 class BlogService
 {
-    public function getUser(int $id): Post
-    {
-        return User::findOrFail($id);
-    }
-
     public function createBlog(array $data): Post
     {
         User::findOrFail($data['user_id']);
@@ -36,18 +30,18 @@ class BlogService
         }
 
         $postId = Post::whereIn('id', array_column($pending, 'id'))->pluck('id')->all();
-        $pendingFailed=[];
+        $pendingFailed = [];
         foreach ($pending as $p) {
-            if (!in_array($p['id'], $postId)) {
-                //$pending[$p] key will always the same as $p['id'] since it is defined on update stage
+            if (! in_array($p['id'], $postId)) {
+                // $pending[$p] key will always the same as $p['id'] since it is defined on update stage
                 unset($pending[$p['id']]);
-                $pendingFailed[]=$p['id'];
+                $pendingFailed[] = $p['id'];
             }
         }
 
-        if (count($pendingFailed)>0){
+        if (count($pendingFailed) > 0) {
             session(['pending_edits' => $pending]);
-            throw new \RuntimeException('Some staged posts no longer exist: ' . implode(',', $pendingFailed));
+            throw new \RuntimeException('Some staged posts no longer exist: '.implode(',', $pendingFailed));
         }
 
         DB::transaction(function () use ($pending) {
@@ -75,7 +69,7 @@ class BlogService
     public function updatePage(int $id): Post
     {
         $post = Post::findOrFail($id);
-        $pending = session('pending_edits.' . $id);
+        $pending = session('pending_edits.'.$id);
 
         if ($pending) {
             $post->title = $pending['title'];

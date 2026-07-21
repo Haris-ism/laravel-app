@@ -47,4 +47,24 @@ class CreateBlogTest extends TestCase
             'content' => $input['content'],
         ]);
     }
+
+    public function test_create_blog_unauthenticated(): void
+    {
+        $input = [
+            'title' => 'title test',
+            'content' => 'content test',
+        ];
+
+        $response = $this->post(route('blog.createBlog'), $input);
+
+        $response->assertRedirect(route('blog.blogPage'));
+
+        $this->assertGuest();
+        $response->assertSessionHas('url.intended');
+        $this->assertDatabaseMissing('posts', [
+            'title' => $input['title'],
+            'content' => $input['content'],
+        ]);
+
+    }
 }

@@ -41,4 +41,20 @@ class DeleteBlogTest extends TestCase
             'id' => $post->id,
         ]);
     }
+
+    public function test_delete_blog_unauthenticated(): void
+    {
+        $user = User::factory()->create();
+        $post = Post::factory()->create(['user_id' => $user->id]);
+
+        $response = $this->delete(route('blog.deleteBlog', $post->id));
+        $response->assertRedirect(route('blog.blogPage'));
+
+        $this->assertGuest();
+        $response->assertSessionHas('url.intended');
+        $this->assertDatabaseHas('posts', [
+            'id' => $post->id,
+        ]);
+
+    }
 }
