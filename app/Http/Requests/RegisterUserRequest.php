@@ -5,9 +5,9 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class CreateBlogRequest extends FormRequest
+class RegisterUserRequest extends FormRequest
 {
-    protected $errorBag = 'create';
+    protected $errorBag = 'register';
 
     /**
      * Determine if the user is authorized to make this request.
@@ -25,8 +25,9 @@ class CreateBlogRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
+            'name' => 'required|string',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8',
         ];
     }
 }

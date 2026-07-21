@@ -5,8 +5,10 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class BatchUpdateBlogRequest extends FormRequest
+class StageUpdateBlogRequest extends FormRequest
 {
+    protected $errorBag = 'stageUpdate';
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -22,11 +24,21 @@ class BatchUpdateBlogRequest extends FormRequest
      */
     public function rules(): array
     {
+        $id = $this->route('id');
+
         return [
-            'blogs'           => 'required|array',
-            'blogs.*.id'      => 'required|integer|exists:posts,id',
-            'blogs.*.title'   => 'required|string|max:255',
-            'blogs.*.content' => 'required|string',
+            "edit.title.$id" => 'required|string|max:255',
+            "edit.content.$id" => 'required|string',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        $id = $this->route('id');
+
+        return [
+            "edit.title.$id" => 'title',
+            "edit.content.$id" => 'content',
         ];
     }
 }

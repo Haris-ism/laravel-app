@@ -114,11 +114,6 @@
                                 Deploy now
                             </a>
                         </li>
-                        <li>
-                            <x-button  href="https://cloud.laravel.com" target="_blank">
-                                button from component
-                            </x-button>
-                        </li>
                     </ul>
 
                     <p class="mt-6 lg:mt-10 text-[#706f6c] dark:text-[#A1A09A]">

@@ -7,33 +7,33 @@
         <div class="flex items-center gap-6">
             <a href="/blog"
                 class="text-sm font-medium transition-colors {{ $path === 'blog' ? 'text-gray-900 border-b-2 border-gray-900 pb-0.5' : 'text-gray-400 hover:text-gray-900' }}">
-                Articles
+                Blogs
             </a>
-            <a href="/blog/manage" data-auth="manage"
-                class="text-sm font-medium transition-colors {{ $path === 'blog/manage' ? 'text-gray-900 border-b-2 border-gray-900 pb-0.5' : 'text-gray-400 hover:text-gray-900' }}"
-                style="display: none;">
-                Manage
-            </a>
+            @auth
+                <a href="/blog/manage"
+                    class="text-sm font-medium transition-colors {{ $path === 'blog/manage' ? 'text-gray-900 border-b-2 border-gray-900 pb-0.5' : 'text-gray-400 hover:text-gray-900' }}">
+                    Manage
+                </a>
 
-            <!-- Guest buttons -->
-            <div data-auth="guest" class="flex items-center gap-2">
-                <button onclick="openLoginModal()"
-                    class="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-                    Login
-                </button>
-                <button onclick="openRegisterModal()"
-                    class="text-sm font-semibold bg-gray-900 text-white px-4 py-1.5 rounded-lg hover:bg-gray-700 transition-colors">
-                    Register
-                </button>
-            </div>
-
-            <!-- Auth user -->
-            <div data-auth="user" class="items-center gap-3" style="display: none;">
-                <button onclick="logout()"
-                    class="text-sm font-medium text-gray-400 hover:text-gray-900 transition-colors">
-                    Logout
-                </button>
-            </div>
+                <form method="POST" action="{{ route('auth.logout') }}" class="flex items-center gap-3">
+                    @csrf
+                    <button type="submit"
+                        class="text-sm font-medium text-gray-400 hover:text-gray-900 transition-colors">
+                        Logout
+                    </button>
+                </form>
+            @else
+                <div class="flex items-center gap-2">
+                    <button onclick="openLoginModal()"
+                        class="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+                        Login
+                    </button>
+                    <button onclick="openRegisterModal()"
+                        class="text-sm font-semibold bg-gray-900 text-white px-4 py-1.5 rounded-lg hover:bg-gray-700 transition-colors">
+                        Register
+                    </button>
+                </div>
+            @endauth
         </div>
     </div>
 </nav>

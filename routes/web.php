@@ -1,19 +1,24 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BlogController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/blog', function () {
-    return view('blog.index');
+Route::get('/blog', [BlogController::class, 'blogPage'])->name('blog.blogPage');
+Route::post('/blog/login', [AuthController::class, 'login'])->name('auth.login');
+Route::post('/blog/register', [AuthController::class, 'register'])->name('auth.register');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/blog/manage', [BlogController::class, 'blogManagePage'])->name('blog.blogManagePage');
+    Route::post('/blog/create', [BlogController::class, 'createBlog'])->name('blog.createBlog');
+    Route::put('/blog/{id}', [BlogController::class, 'updateStage'])->name('blog.updateStage');
+    Route::post('/blog/batch-update', [BlogController::class, 'batchUpdate'])->name('blog.batchUpdate');
+    Route::post('/blog/logout', [AuthController::class, 'logout'])->name('auth.logout');
 });
 
-Route::get('/blog/manage', function () {
-    return view('blog.manage');
-});
+Route::get('/blog/{title}', [BlogController::class, 'blogDetailPage'])->name('blog.blogDetailPage');
 
-Route::get('/blog/{title}', function (string $title) {
-    return view('blog.detail', ['title' => $title]);
-});

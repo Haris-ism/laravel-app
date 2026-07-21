@@ -1,56 +1,51 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
-
 
 use Illuminate\Http\Request;
+use App\Http\Requests\LoginUserRequest;
+use App\Http\Requests\RegisterUserRequest;
+
+use App\Services\AuthService;
+use Illuminate\Support\Facades\Log;
+
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function __construct(private AuthService $service) {}
+    public function login(LoginUserRequest $request)
     {
-        $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users',
-            'password' => 'required|string|min:8',
-        ]);
+        $loginRes=$this->service->login($request->validated());
 
-        $user  = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return $this->successResponse(['token' => $token], 'registered', 201);
-    }
-
-    public function login(Request $request)
-    {
-        $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required|string',
-        ]);
-
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Invalid credentials.'],
-            ]);
+        if (! $loginRes) {
+            return back()->withErrors(['email' => 'Invalid credentials.'], 'login')->onlyInput('email');
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $request->session()->regenerate();
 
-        return $this->successResponse(['token' => $token], 'logged in');
+        return redirect()->route('blog.blogPage')->with('status', 'ログインしました');
+    }
+
+    public function register(RegisterUserRequest $request)
+    {
+        $registerRes=$this->service->register($request->validated());
+
+        if (! $registerRes) {
+            return back()->withErrors(['email' => 'Invalid Data'], 'register')->onlyInput('email');
+        }
+
+        $request->session()->regenerate();
+
+        return redirect()->route('blog.blogPage')->with('status', '登録しました');
     }
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
-        return $this->successResponse(null, 'logged out');
+        $this->service->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('blog.blogPage')->with('status', 'ログアウトしました');
     }
 }
