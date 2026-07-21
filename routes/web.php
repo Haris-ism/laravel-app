@@ -22,7 +22,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/blog/{id}/edit', [BlogController::class, 'updatePage'])->name('blog.updatePage');
     Route::put('/blog/{id}', [BlogController::class, 'updateStage'])->name('blog.updateStage');
     Route::delete('/blog/{id}', [BlogController::class, 'deleteBlog'])->name('blog.deleteBlog');
-    Route::post('/blog/batch-update', [BlogController::class, 'batchUpdate'])->name('blog.batchUpdate');
     Route::post('/blog/logout', [AuthController::class, 'logout'])->name('auth.logout');
 });
 

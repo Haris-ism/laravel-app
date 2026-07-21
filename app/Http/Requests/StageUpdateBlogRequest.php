@@ -25,6 +25,7 @@ class StageUpdateBlogRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'id' => 'required|integer',
             'title' => 'required|string|max:255',
             'content' => 'required|string',
         ];

@@ -10,6 +10,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js', ...(isset($js) ? [$js] : [])])
     @endif
     {{ $head ?? '' }}
+    @livewireStyles
 </head>
 <body class="bg-stone-50 min-h-screen" style="font-family: 'Inter', sans-serif;">
 
@@ -33,6 +34,6 @@
         data-autoopen="{{ ($errors->register->has('name') || $errors->register->has('email') || $errors->register->has('password')) ? 'true' : 'false' }}">
         <x-modals.register/>
     </x-modals.modal>
-
+    @livewireScripts
 </body>
 </html>
