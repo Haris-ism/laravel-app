@@ -11,14 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (! Schema::hasTable('posts')) {
-            Schema::create('posts', function (Blueprint $table) {
-                $table->id();
-                $table->string('title');
-                $table->text('content');
-                $table->timestamps();
-            });
-        }
+        Schema::table('comments', function (Blueprint $table) {
+            $table->foreignId('user_id')->after('post_id')->constrained()->cascadeOnDelete();
+        });
     }
 
     /**
@@ -26,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('posts');
+        Schema::table('comments', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('user_id');
+        });
     }
 };

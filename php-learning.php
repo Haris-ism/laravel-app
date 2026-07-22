@@ -1,20 +1,20 @@
 <?php
+
 // declare(strict_types=1);
 /**
  * PHP LEARNING FILE
  * Topics: Variables & Types, Control Flow, Functions, Classes & OOP
  */
-
 echo "=== 1. VARIABLES & TYPES ===\n\n";
 
 // Variables (all start with $)
-$name = "John";
+$name = 'John';
 $age = 25;
 $price = 19.99;
 $isActive = true;
 $tasks = null;
 
-echo "Name: $name" . " euy\n";
+echo "Name: $name"." euy\n";
 printf("Name: %s\n", $name);
 
 // echo "String: $name\n";
@@ -85,9 +85,9 @@ printf("Name: %s\n", $name);
 
 // FOR loop
 echo "For loop (0-4): \n";
-for ($i=0;$i<5;$i++){
+for ($i = 0; $i < 5; $i++) {
     echo "$i \n";
-};
+}
 
 // // FOREACH loop (array iteration)
 // $fruits = ["apple", "banana", "cherry"];
@@ -280,4 +280,3 @@ for ($i=0;$i<5;$i++){
 // echo "Roles: " . implode(", ", $user->roles) . "\n";
 
 // echo "\n=== DONE ===\n";
-?>

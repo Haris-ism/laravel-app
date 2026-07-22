@@ -2,20 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Http\Requests\LoginUserRequest;
 use App\Http\Requests\RegisterUserRequest;
-
 use App\Services\AuthService;
-use Illuminate\Support\Facades\Log;
-
+use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
     public function __construct(private AuthService $service) {}
+
     public function login(LoginUserRequest $request)
     {
-        $loginRes=$this->service->login($request->validated());
+        $loginRes = $this->service->login($request->validated());
 
         if (! $loginRes) {
             return back()->withErrors(['email' => 'Invalid credentials.'], 'login')->onlyInput('email');
@@ -28,7 +26,7 @@ class AuthController extends Controller
 
     public function register(RegisterUserRequest $request)
     {
-        $registerRes=$this->service->register($request->validated());
+        $registerRes = $this->service->register($request->validated());
 
         if (! $registerRes) {
             return back()->withErrors(['email' => 'Invalid Data'], 'register')->onlyInput('email');

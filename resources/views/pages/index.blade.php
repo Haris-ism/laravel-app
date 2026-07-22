@@ -16,9 +16,9 @@
                         <article class="bg-white border border-gray-100 rounded-2xl p-7 hover:-translate-y-1 hover:shadow-xl transition-all duration-200 cursor-pointer">
                             <div class="flex items-center gap-2.5 mb-4">
                                 <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-500">
-                                    {{ strtoupper(substr($post->title, 0, 1)) }}
+                                    {{ strtoupper(substr($post->author->name, 0, 1)) }}
                                 </div>
-                                <span class="text-xs text-gray-400 font-medium">{{ $post->created_at?->format('F j, Y') }}</span>
+                                <span class="text-xs text-gray-400 font-medium">{{ $post->author->name }} · {{ $post->created_at?->format('F j, Y') }}</span>
                             </div>
                             <h2 class="text-lg font-bold text-gray-900 tracking-tight leading-snug mb-2">
                                 {{ $post->title }}

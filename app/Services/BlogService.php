@@ -1,132 +1,109 @@
 <?php
 
 namespace App\Services;
+
 use App\Models\Post;
+use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Log;
-
 use Illuminate\Support\Facades\DB;
-
 
 class BlogService
 {
-
-   public function createBlog(array $data): bool
+    public function createBlog(array $data): Post
     {
-        try{
-            Post::create($data);
-        }catch(\Throwable $e){
-            Log::error("createBlog error: ",['error:'=>$e->getMessage()]);
-            return false;
-        }
-        return true;
+        User::findOrFail($data['user_id']);
+
+        return Post::create($data);
     }
 
-   public function batchUpdate(): bool
+    public function deleteBlog(Post $post): bool
+    {
+        return $post->delete();
+    }
+
+    public function batchUpdate(): void
     {
         $pending = session('pending_edits', []);
 
         if (empty($pending)) {
-            return true;
+            return;
         }
 
         $postId = Post::whereIn('id', array_column($pending, 'id'))->pluck('id')->all();
-        $pendingFailed=[];
+        $pendingFailed = [];
         foreach ($pending as $p) {
-            if (!in_array($p['id'], $postId)) {
-                //$pending[$p] key will always the same as $p['id'] since it is defined on update stage
+            if (! in_array($p['id'], $postId)) {
+                // $pending[$p] key will always the same as $p['id'] since it is defined on update stage
                 unset($pending[$p['id']]);
-                $pendingFailed[]=$p['id'];
+                $pendingFailed[] = $p['id'];
             }
         }
 
-        if (count($pendingFailed)>0){
-            Log::error('failed to batchUpdate id: ', ['id' => $pendingFailed]);
+        if (count($pendingFailed) > 0) {
             session(['pending_edits' => $pending]);
-            return false;
+            throw new \RuntimeException('Some staged posts no longer exist: '.implode(',', $pendingFailed));
         }
 
-        try {
-            DB::transaction(function () use ($pending) {
-                foreach ($pending as $p) {
-                    Post::where('id', $p['id'])->update([
-                        'title'   => $p['title'],
-                        'content' => $p['content'],
-                    ]);
-                }
-            });
-        } catch (\Throwable $e) {
-            Log::error("batchUpdate error: ",['error:'=>$e->getMessage()]);
-            return false;
-        }
+        DB::transaction(function () use ($pending) {
+            foreach ($pending as $p) {
+                Post::where('id', $p['id'])->update([
+                    'title' => $p['title'],
+                    'content' => $p['content'],
+                ]);
+            }
+        });
+
         session()->forget('pending_edits');
-        return true;
     }
 
-
-    public function getDataAll(int $perPage = 10): LengthAwarePaginator|null
+    public function getDataAll(int $perPage = 10): LengthAwarePaginator
     {
-        try{
-            $post=Post::orderBy('created_at', 'desc')->paginate($perPage);
-        }catch(\Throwable $e){
-            Log::error("getDataAll error: ",['error:'=>$e->getMessage()]);
-            return null;
+        return Post::with('author')->orderBy('created_at', 'desc')->paginate($perPage);
+    }
+
+    public function getBlogDetailByTitle(string $title): Post
+    {
+        return Post::with('comments')->where('title', $title)->firstOrFail();
+    }
+
+    public function updatePage(int $id): Post
+    {
+        $post = Post::findOrFail($id);
+        $pending = session('pending_edits.'.$id);
+
+        if ($pending) {
+            $post->title = $pending['title'];
+            $post->content = $pending['content'];
         }
+
         return $post;
     }
 
-    public function getBlogDetailByTitle(string $title): Post|null
+    public function updateStage(Post $post, array $data): void
     {
-        try {
-            $post=Post::with('comments')->where('title', $title)->firstOrFail();
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            Log::error("getBlogDetailByTitle error: ",['error:'=>$e->getMessage()]);
-            return null;
-        }
-        return $post;
+        $pending = session('pending_edits', []);
+        $pending[$post->id] = [
+            'id' => $post->id,
+            'title' => $data['edit']['title'][$post->id],
+            'content' => $data['edit']['content'][$post->id],
+        ];
+
+        session(['pending_edits' => $pending]);
     }
 
-    public function getBlogDetailList(): array|object
+    public function blogManagePage(): array
     {
-        // // eloquent with() version
-        $posts = Post::with('comments')->get();
-
-        return $posts->all();
-    }
-
-    public function updateStage(int $id, array $data): bool
-    {
-        try{
-            Post::findOrFail($id);
-
-            $pending = session('pending_edits', []);
-            $pending[$id] = [
-                'id' => $id,
-                'title' => $data['edit']['title'][$id],
-                'content' => $data['edit']['content'][$id],
-            ];
-
-            session(['pending_edits' => $pending]);
-        }catch (\Throwable $e) {
-            Log::error("updateStage error: ",['error:'=>$e->getMessage()]);
-            return false;
-        }
-
-        return true;
-    }
-    public function blogManagePage(): array|null
-    {
-        try{
-            $data = Post::orderBy('created_at', 'desc')->paginate(10);
-            $pending = session('pending_edits', []);
-        }catch(\Throwable $e) {
-            Log::error("blogManagePage error: ",['error:'=>$e->getMessage()]);
-            return null;
-        }
+        $data = Post::with('author')->orderBy('created_at', 'desc')->paginate(10);
+        $pending = session('pending_edits', []);
 
         return [
-            'data'=>$data,
-            'pending'=>$pending,
+            'data' => $data,
+            'pending' => $pending,
         ];
+    }
+
+    public function getBlogById(int $id): Post
+    {
+        return Post::findOrFail($id);
     }
 }
