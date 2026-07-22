@@ -9,11 +9,6 @@ use Illuminate\Support\Facades\DB;
 
 class BlogService
 {
-    public function getUser(int $id): Post
-    {
-        return User::findOrFail($id);
-    }
-
     public function createBlog(array $data): Post
     {
         User::findOrFail($data['user_id']);
@@ -34,6 +29,21 @@ class BlogService
             return;
         }
 
+        $postId = Post::whereIn('id', array_column($pending, 'id'))->pluck('id')->all();
+        $pendingFailed = [];
+        foreach ($pending as $p) {
+            if (! in_array($p['id'], $postId)) {
+                // $pending[$p] key will always the same as $p['id'] since it is defined on update stage
+                unset($pending[$p['id']]);
+                $pendingFailed[] = $p['id'];
+            }
+        }
+
+        if (count($pendingFailed) > 0) {
+            session(['pending_edits' => $pending]);
+            throw new \RuntimeException('Some staged posts no longer exist: '.implode(',', $pendingFailed));
+        }
+
         DB::transaction(function () use ($pending) {
             foreach ($pending as $p) {
                 Post::where('id', $p['id'])->update([
@@ -49,14 +59,6 @@ class BlogService
     public function getBlogDetailByTitle(string $title): Post
     {
         return Post::with('comments')->where('title', $title)->firstOrFail();
-    }
-
-    public function getBlogDetailList(): array|object
-    {
-        // // eloquent with() version
-        $posts = Post::with('comments')->get();
-
-        return $posts->all();
     }
 
     public function updatePage(int $id): Post
@@ -77,13 +79,12 @@ class BlogService
         $pending = session('pending_edits', []);
         $pending[$post->id] = [
             'id' => $post->id,
-            'title' => $data['title'],
-            'content' => $data['content'],
+            'title' => $data['edit']['title'][$post->id],
+            'content' => $data['edit']['content'][$post->id],
         ];
 
         session(['pending_edits' => $pending]);
     }
-
 
     public function getBlogById(int $id): Post
     {

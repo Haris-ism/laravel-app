@@ -1,24 +1,24 @@
 <form wire:submit="createBlog()" class="space-y-4">
     <div>
         <label class="block text-sm font-semibold text-gray-700 mb-1.5">Title</label>
-        <input name="title" type="text" wire:model="newTitle" placeholder="Enter blog title"
+        <input name="title" type="text" wire:model="title" placeholder="Enter blog title"
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition">
-        @error('newTitle')
+        @error('title')
             <p class="text-red-500 text-xs font-medium mt-1.5">{{ $message }}</p>
         @enderror
     </div>
 
     <div>
         <label class="block text-sm font-semibold text-gray-700 mb-1.5">Content</label>
-        <textarea name="content" rows="5" wire:model="newContent"  placeholder="Write your blog content..."
+        <textarea name="content" rows="5" wire:model="content"  placeholder="Write your blog content..."
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition resize-none">{{ old('content') }}</textarea>
-        @error('newContent')
+        @error('content')
             <p class="text-red-500 text-xs font-medium mt-1.5">{{ $message }}</p>
         @enderror
     </div>
 
     <div class="flex gap-3 pt-2">
-        <button type="button" onclick="closeCreateModal()"
+        <button type="button" x-on:click="typeof open !== 'undefined' && (open = false)"
             class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
             Cancel
         </button>

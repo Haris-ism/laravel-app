@@ -20,7 +20,7 @@
     </div>
 
     <div class="flex gap-3 pt-2">
-        <button type="button" data-close="closeLoginModal"
+        <button type="button" x-on:click="typeof open !== 'undefined' && (open = false)"
             class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
             Cancel
         </button>

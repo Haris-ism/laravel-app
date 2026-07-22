@@ -12,26 +12,41 @@
     {{ $head ?? '' }}
     @livewireStyles
 </head>
-<body class="bg-stone-50 min-h-screen" style="font-family: 'Inter', sans-serif;">
+<body x-data="{}" class="bg-stone-50 min-h-screen" style="font-family: 'Inter', sans-serif;">
 
     <x-navbar/>
 
-    @if (session('status') || session('error'))
-        <div id="snackbar"
-            class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium transition-opacity duration-500 {{ session('status') ? 'bg-green-600 text-white' : 'bg-red-600 text-white' }}">
-            {{ session('status') ?? session('error') }}
+    <!-- snackbar notification -->
+        <div x-data="{ open: false, message: '', type: '' }"
+            x-on:notify.window="
+                message = $event.detail.message;
+                type = $event.detail.type;
+                open = true;
+                setTimeout(() => open = false, 2000);
+            "
+            x-show="open"
+            x-transition:leave="transition ease-in duration-500"
+            x-transition:leave-end="opacity-0"
+            class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium"
+            :class="type === 'status' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'">
+            <span x-text="message"></span>
         </div>
-    @endif
 
     {{ $slot }}
 
-    <x-modals.modal id="login-modal" title="Welcome back" on-close="closeLoginModal"
-        data-autoopen="{{ ($errors->login->has('email') || $errors->login->has('password')) ? 'true' : 'false' }}">
+    <x-modals.modal id="login-modal" title="Welcome back"
+        x-data="{ open: {{ ($errors->login->has('email') || $errors->login->has('password')) ? 'true' : 'false' }} }"
+        x-show="open"
+        x-on:open-login-modal.window="open=true"
+        x-on:close-login-modal.window="open=false">
         <x-modals.login/>
     </x-modals.modal>
 
-    <x-modals.modal id="register-modal" title="Create an account" on-close="closeRegisterModal"
-        data-autoopen="{{ ($errors->register->has('name') || $errors->register->has('email') || $errors->register->has('password')) ? 'true' : 'false' }}">
+    <x-modals.modal id="register-modal" title="Create an account"
+        x-data="{ open: {{ ($errors->register->has('name') || $errors->register->has('email') || $errors->register->has('password')) ? 'true' : 'false' }} }"
+        x-show="open"
+        x-on:open-register-modal.window="open=true"
+        x-on:close-register-modal.window="open=false">
         <x-modals.register/>
     </x-modals.modal>
     @livewireScripts

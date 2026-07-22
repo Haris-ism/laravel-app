@@ -1,8 +1,3 @@
-<x-layout title="Manage Blog" js="resources/js/pages/blog-manage.js">
-    
+<x-layout title="Manage Blog" >
     <livewire:blog-manage />
-    </div>
-
-    
-
 </x-layout>

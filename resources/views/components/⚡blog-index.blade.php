@@ -11,16 +11,19 @@ new class extends Component
     use WithPagination;
 
     public string $search = '';
-    public string $error = '';
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
 
     public function with(): array
     {
         try{
             $posts = app(BlogService::class)->blogSearch($this->search);
-            $this->error = '';
         } catch (QueryException $e){
             Log::error('blogPage error: ', ['error:' => $e->getMessage()]);
-            $this->error='Something went wrong';
+            $this->dispatch('notify', message: 'Something went wrong', type: 'error');
             $posts = collect();
         }
 
@@ -39,7 +42,7 @@ new class extends Component
     @if ($posts->isEmpty())
         <div class="text-center py-24">
             <div class="text-5xl mb-4">📭</div>
-            <p class="text-gray-400 font-medium">No posts found.</p>
+            <p class="text-gray-400 font-medium">No posts yet.</p>
         </div>
     @else
         <div class="space-y-4">
@@ -68,9 +71,6 @@ new class extends Component
             @endforeach
         </div>
         <!-- Pagination -->
-        <x-pagination :pagination="$posts"/>
-    @endif
-    @if (session('status') || session('error') || $error)
-        <div id="snackbar">{{ session('status') ?? session('error') ?? $error}}</div>
+        <x-pagination :pagination="$posts" :disabled="$search !== ''"/>
     @endif
 </div>

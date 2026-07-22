@@ -24,11 +24,11 @@
                 </form>
             @else
                 <div class="flex items-center gap-2">
-                    <button onclick="openLoginModal()"
+                    <button x-on:click="$dispatch('open-login-modal')"
                         class="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
                         Login
                     </button>
-                    <button onclick="openRegisterModal()"
+                    <button x-on:click="$dispatch('open-register-modal')"
                         class="text-sm font-semibold bg-gray-900 text-white px-4 py-1.5 rounded-lg hover:bg-gray-700 transition-colors">
                         Register
                     </button>

@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\User;
 use App\Services\BlogService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -15,33 +14,35 @@ new class extends Component
 
 
     public string $search = '';
-    public string $status = '';
-    public string $error = '';
     public array $pending = [];
     public array $edit = [];
-    public string $newTitle = '';
-    public string $newContent = '';
+    public string $title = '';
+    public string $content = '';
+
+    public function validationAttributes(): array
+    {
+        $attributes = [
+            'title' => 'title',
+            'content' => 'content',
+        ];
+
+        foreach (array_keys($this->edit['title']?? []) as $id){
+            $attributes["edit.title.$id"]='title';
+            $attributes["edit.content.$id"]='content';
+        }
+
+        return $attributes;
+    }
+
 
     public function mount(): void
     {
         $this->pending = session('pending_edits', []);
     }
 
-    public function snackBarMessage(string $type, string $message):void
+    public function updatedSearch(): void
     {
-        switch ($type){
-            case 'error':
-                $this->error = $message;
-                $this->status = '';
-                break;
-            case 'status':
-                $this->error = '';
-                $this->status = $message;
-                break;
-            default:
-                $this->error = '';
-                $this->status = '';
-        }
+        $this->resetPage();
     }
 
     public function stageEdit(int $postId): void
@@ -62,21 +63,22 @@ new class extends Component
             ];
             session(['pending_edits' => $this->pending]);
             $this->dispatch('close-edit-modal');
-            $this->snackBarMessage('status','Blog staged');
+            $this->dispatch('notify', message: 'Blog staged', type: 'status');
         } catch (ModelNotFoundException $e) {
             Log::error('stageEdit not found error: ', ['error:' => $e->getMessage()]);
-            $this->snackBarMessage('error','Blog post not found');
-
+            $this->dispatch('notify', message: 'Staged blog not found', type: 'error');
         } catch (AuthorizationException $e) {
             Log::error('stageEdit unauthorized error: ', ['error:' => $e->getMessage()]);
             session()->flash('error', 'Unauthorized user');
-            $this->snackBarMessage('error','Unauthorized user');
+            $this->dispatch('notify', message: 'Unauthorized user', type: 'error');
             $this->redirect(route('blog.blogPage'));
-            
         } catch (QueryException $e) {
             Log::error('stageEdit query error: ', ['error:' => $e->getMessage()]);
-            $this->snackBarMessage('error','Something went wrong');
-
+            $this->dispatch('notify', message: 'Something went wrong', type: 'error');
+        }
+        catch (\RuntimeException $e) {
+            Log::error('stageEdit query error: ', ['error:' => $e->getMessage()]);
+            $this->dispatch('notify', message: 'Something went wrong', type: 'error');
         }
     }
 
@@ -86,10 +88,14 @@ new class extends Component
             app(BlogService::class)->batchUpdate();
             $this->pending = [];
             session()->forget('pending_edits');
-            $this->snackBarMessage('status','Blog post updated');
+            $this->dispatch('notify', message: 'Blog post updated', type: 'status');
+
         } catch (QueryException $e) {
             Log::error('batchUpdate query error: ', ['error:' => $e->getMessage()]);
-            $this->snackBarMessage('error','Something went wrong');
+            $this->dispatch('notify', message: 'Something went wrong', type: 'error');
+        } catch (\RuntimeException $e) {
+            Log::error('batchUpdate query error: ', ['error:' => $e->getMessage()]);
+            $this->dispatch('notify', message: 'Something went wrong', type: 'error');
         }
     }
 
@@ -99,17 +105,18 @@ new class extends Component
             $post = app(BlogService::class)->getBlogById($id);
             $this->authorize('delete', $post);
             app(BlogService::class)->deleteBlog($post);
-            $this->snackBarMessage('status','Blog post deleted');
+            $this->dispatch('notify', message: 'Blog post deleted', type: 'status');
+
         } catch (ModelNotFoundException $e) {
             Log::error('deleteBlog not found error: ', ['error:' => $e->getMessage()]);
-            $this->snackBarMessage('error','Blog post not found');
+            $this->dispatch('notify', message: 'Blog post not found', type: 'error');
         } catch (AuthorizationException $e) {
             Log::error('deleteBlog unauthorized error: ', ['error:' => $e->getMessage()]);
-            $this->snackBarMessage('error','Unauthorized user');
+            $this->dispatch('notify', message: 'Unauthorized user', type: 'error');
             $this->redirect(route('blog.blogPage'));
         } catch (QueryException $e) {
             Log::error('deleteBlog query error: ', ['error:' => $e->getMessage()]);
-            $this->snackBarMessage('error','Something went wrong');
+            $this->dispatch('notify', message: 'Something went wrong', type: 'error');
         }
     }
 
@@ -117,20 +124,22 @@ new class extends Component
     {
         try {
             $this->validate([
-                'newTitle' => 'required|string|max:255',
-                'newContent' => 'required|string',
+                'title' => 'required|string|max:255',
+                'content' => 'required|string',
             ]);
             $data = [
-                'title'=>$this->newTitle,
-                'content'=>$this->newContent,
+                'title'=>$this->title,
+                'content'=>$this->content,
                 'user_id' => Auth::id(),
             ];
             app(BlogService::class)->createBlog($data);
+            $this->reset('title', 'content');
             $this->dispatch('close-create-modal');
-            $this->snackBarMessage('status','Blog created');
+            $this->dispatch('notify', message: 'Blog created', type: 'status');
+
         } catch (QueryException $e) {
             Log::error('createBlog query error: ', ['error:' => $e->getMessage()]);
-            $this->snackBarMessage('error','Something went wrong');
+            $this->dispatch('notify', message: 'Something went wrong', type: 'error');
         }
     }
 
@@ -138,10 +147,9 @@ new class extends Component
     {
         try {
             $posts = app(BlogService::class)->blogSearch($this->search);
-            $this->snackBarMessage('reset','');
         } catch (QueryException $e) {
             Log::error('blog-manage blogSearch error: ', ['error:' => $e->getMessage()]);
-            $this->snackBarMessage('error','Something went wrong');
+            $this->dispatch('notify', message: 'Something went wrong', type: 'error');
             $this->redirect(route('blog.blogPage'));
             $posts = collect();
 
@@ -170,8 +178,9 @@ new class extends Component
                 <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Manage Blogs</h1>
                 <p class="text-sm text-gray-400 mt-1">Create, edit, and publish blogs.</p>
             </div>
-            <button onclick="openCreateModal()"
-            class="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-700 transition-colors">
+            <button 
+                x-on:click="$dispatch('open-create-modal')"
+                class="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-700 transition-colors">
             + New Blog
         </button>
     </div>
@@ -186,7 +195,8 @@ new class extends Component
         <div id="empty" class=" text-center py-32">
             <div class="text-5xl mb-4">📭</div>
             <p class="text-gray-400 font-medium mb-4">No blogs yet.</p>
-            <button onclick="openCreateModal()"
+            <button 
+                x-on:click="$dispatch('open-create-modal')"
                 class="px-5 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-700 transition-colors">
                 Create your first post
             </button>
@@ -212,7 +222,7 @@ new class extends Component
                                 $edit = $pending[$post->id] ?? null;
                                 $canEdit = $post->user_id === auth()->id();
                             @endphp
-                            <tr id="row-{{ $post->id }}" class="border-b border-gray-100 hover:bg-gray-50 transition-colors {{ $edit ? 'bg-amber-50' : '' }}">
+                            <tr wire:key="row-{{ $post->id }}" id="row-{{ $post->id }}" class="border-b border-gray-100 hover:bg-gray-50 transition-colors {{ $edit ? 'bg-amber-50' : '' }}">
                                 <td class="px-6 py-4 text-sm text-gray-400 w-12">{{$post->id}}</td>
                                 <td class="px-6 py-4">
                                     <span id="title-{{ $post->id }}" class="text-sm font-semibold text-gray-900">{{ $edit['title'] ?? $post->title }}</span>
@@ -232,24 +242,24 @@ new class extends Component
                                             class="text-xs font-semibold text-gray-900 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent">
                                             Edit
                                         </button>
-                                        <form wire:submit="deleteBlog({{ $post->id }})"
-                                            onsubmit="return confirm('Confirm Delete Blog Post?')">
+                                        <form wire:submit="deleteBlog({{ $post->id }})">
                                             <button type="submit" @disabled(! $canEdit)
                                                 class="text-xs font-semibold text-red-600 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent">
                                                 Delete
                                             </button>
                                         </form>
+                                        <x-modals.modal
+                                            wire:key="edit-modal-{{ $post->id }}"
+                                            wire:ignore.self
+                                            x-data="{ open: false }" x-show="open"
+                                            x-on:open-edit-modal.window="if ($event.detail == {{ $post->id }}) open = true"
+                                            x-on:close-edit-modal.window="open = false"
+                                            id="edit-modal-{{ $post->id }}" title="Edit Post">
+                                            <x-modals.edit :post="$post"/>
+                                        </x-modals.modal>
                                     </div>
                                 </td>
                             </tr>
-                            <x-modals.modal 
-                                wire:ignore.self 
-                                x-data="{ open: false }" x-show="open"
-                                x-on:open-edit-modal.window="if ($event.detail == {{ $post->id }}) open = true"
-                                x-on:close-edit-modal.window="open = false"
-                                id="edit-modal-{{ $post->id }}" title="Edit Post" on-close="closeEditModal">
-                                <x-modals.edit :post="$post"/>
-                            </x-modals.modal>
                         @endforeach
                     </tbody>
                 </table>
@@ -257,7 +267,7 @@ new class extends Component
         </div>
     @endif
 
-    <x-pagination :pagination="$data"/>
+    <x-pagination :pagination="$data" :disabled="$search !== ''"/>
 
     <!-- Save Button (fixed bottom right) -->
     <div class="fixed bottom-8 right-8 flex items-center gap-3">
@@ -270,17 +280,16 @@ new class extends Component
         </button>
     </div>
 
-    <x-modals.modal wire:ignore.self id="create-modal" title="New Blog" on-close="closeCreateModal"
-        data-autoopen="{{ ($errors->create->has('title') || $errors->create->has('content')) ? 'true' : 'false' }}">
+    <x-modals.modal 
+        wire:ignore.self
+        x-data="{open:false}"
+        x-show="open"
+        x-on:open-create-modal.window="open=true"
+        x-on:close-create-modal.window="open=false"
+        id="create-modal" 
+        title="New Blog" >
         <x-modals.create/>
     </x-modals.modal>
 
-    @if ($status || $error)
-        <div wire:key="snackbar-{{ md5($status.$error) }}" x-data
-            x-init="setTimeout(() => $wire.snackBarMessage('reset',''), 2000)"
-            class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium {{ $status ? 'bg-green-600 text-white' : 'bg-red-600 text-white' }}">
-            {{ $status ?: $error }}
-        </div>
-    @endif
-
+    </div>
 </div>

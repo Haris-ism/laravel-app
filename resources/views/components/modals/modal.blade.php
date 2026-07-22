@@ -1,11 +1,10 @@
-@props(['id', 'title', 'onClose'])
+@props(['id', 'title'])
 
-<div id="{{ $id }}" {{ 
+<div id="{{ $id }}" {{
     $attributes->merge(['class' => $attributes->has('x-data')
-        ? 'fixed inset-0 z-50 flex items-center justify-center px-4'
-        : 'hidden fixed inset-0 z-50 flex items-center justify-center px-4']) }}>
+        ? 'fixed inset-0 z-50 flex items-center justify-center px-4 text-left'
+        : 'hidden fixed inset-0 z-50 flex items-center justify-center px-4 text-left']) }}>
     <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" 
-         data-close="{{ $onClose }}"
          x-on:click="typeof open !== 'undefined' && (open = false)">
     </div>
     <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8">
@@ -15,7 +14,6 @@
             <h2 class="text-xl font-bold text-gray-900">{{ $title }}</h2>
             <button 
                 x-on:click="typeof open !== 'undefined' && (open = false)"
-                data-close="{{ $onClose }}" 
                 class="text-gray-400 hover:text-gray-900 transition-colors text-xl font-light">
                 ✕
             </button>
