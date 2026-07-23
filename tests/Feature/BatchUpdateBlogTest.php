@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class BatchUpdateBlogTest extends TestCase
@@ -33,11 +34,11 @@ class BatchUpdateBlogTest extends TestCase
             ];
         }
 
-        $response = $this->actingAs($user)
-            ->withSession(['pending_edits' => $pending])
-            ->post(route('blog.batchUpdate'));
+        session(['pending_edits' => $pending]);
 
-        $response->assertRedirect(route('blog.blogManagePage'));
+        $response = Livewire::actingAs($user)
+            ->test('blog-manage')
+            ->call('batchUpdate');
 
         foreach ($pending as $data) {
             $this->assertDatabaseHas('posts', [
@@ -82,12 +83,12 @@ class BatchUpdateBlogTest extends TestCase
             ];
         }
 
-        $response = $this->actingAs($user)
-            ->withSession(['pending_edits' => $pending])
-            ->post(route('blog.batchUpdate'));
+        session(['pending_edits' => $pending]);
 
-        $response->assertRedirect(route('blog.blogManagePage'));
-        $response->assertSessionHas('error');
+        Livewire::actingAs($user)
+            ->test('blog-manage')
+            ->call('batchUpdate')
+            ->assertDispatched('notify', type: 'error');
 
         foreach ($posts as $post) {
             $this->assertDatabaseHas('posts', [
@@ -120,14 +121,12 @@ class BatchUpdateBlogTest extends TestCase
             ];
         }
 
-        $response = $this
-            ->withSession(['pending_edits' => $pending])
-            ->post(route('blog.batchUpdate'));
+        session(['pending_edits' => $pending]);
 
+        $response = $this->get(route('blog.blogManagePage'));
         $response->assertRedirect(route('blog.blogPage'));
 
         $this->assertGuest();
-        $response->assertSessionHas('url.intended');
         foreach ($pending as $data) {
             $this->assertDatabaseMissing('posts', [
                 'id' => $data['id'],
@@ -164,11 +163,12 @@ class BatchUpdateBlogTest extends TestCase
             'content' => 'invalid content',
         ];
 
-        $response = $this->actingAs($user)
-            ->withSession(['pending_edits' => $pending])
-            ->post(route('blog.batchUpdate'));
-        $response->assertSessionHas('error');
-        $response->assertRedirect(route('blog.blogManagePage'));
+        session(['pending_edits' => $pending]);
+
+        Livewire::actingAs($user)
+            ->test('blog-manage')
+            ->call('batchUpdate')
+            ->assertDispatched('notify', type: 'error');
 
         foreach ($pending as $data) {
             $this->assertDatabaseMissing('posts', [

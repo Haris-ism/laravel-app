@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class DeleteBlogTest extends TestCase
@@ -19,7 +20,9 @@ class DeleteBlogTest extends TestCase
         $user = User::factory()->create();
         $post = Post::factory()->create(['user_id' => $user->id]);
 
-        $this->actingAs($user)->delete(route('blog.deleteBlog', $post->id));
+        Livewire::actingAs($user)
+            ->test('blog-manage')
+            ->call('deleteBlog', $post->id);
 
         $this->assertDatabaseMissing('posts', [
             'id' => $post->id,
@@ -33,9 +36,10 @@ class DeleteBlogTest extends TestCase
 
         $user2 = User::factory()->create();
 
-        $response = $this->actingAs($user2)->delete(route('blog.deleteBlog', $post->id));
-        $response->assertRedirect(route('blog.blogManagePage'));
-        $response->assertSessionHas('error', 'Unauthorized user');
+        Livewire::actingAs($user2)
+            ->test('blog-manage')
+            ->call('deleteBlog', $post->id)
+            ->assertRedirect(route('blog.blogPage'));
 
         $this->assertDatabaseHas('posts', [
             'id' => $post->id,
@@ -47,14 +51,14 @@ class DeleteBlogTest extends TestCase
         $user = User::factory()->create();
         $post = Post::factory()->create(['user_id' => $user->id]);
 
-        $response = $this->delete(route('blog.deleteBlog', $post->id));
-        $response->assertRedirect(route('blog.blogPage'));
+        $response = $this->get(route('blog.blogManagePage'));
 
+        $response->assertRedirect(route('blog.blogPage'));
         $this->assertGuest();
         $response->assertSessionHas('url.intended');
+
         $this->assertDatabaseHas('posts', [
             'id' => $post->id,
         ]);
-
     }
 }

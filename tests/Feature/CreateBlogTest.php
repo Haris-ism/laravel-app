@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class CreateBlogTest extends TestCase
@@ -19,13 +20,15 @@ class CreateBlogTest extends TestCase
             'content' => 'content test',
         ];
 
-        $response = $this->actingAs($user)->post(route('blog.createBlog'), $input);
-
-        $response->assertRedirect(route('blog.blogManagePage'));
+        Livewire::actingAs($user)
+            ->test('blog-manage')
+            ->set($input)
+            ->call('createBlog');
 
         $this->assertDatabaseHas('posts', [
             'title' => $input['title'],
-            'user_id' => $user->id,
+            'content' => $input['content'],
+            'user_id' => $user['id'],
         ]);
     }
 
@@ -38,10 +41,11 @@ class CreateBlogTest extends TestCase
             'content' => 'content test',
         ];
 
-        $response = $this->actingAs($user)->post(route('blog.createBlog'), $input);
-
-        $response->assertSessionHasErrors(['title'], null, 'create');
-        $response->assertSessionHasInput('content', $input['content']);
+        Livewire::actingAs($user)
+            ->test('blog-manage')
+            ->set($input)
+            ->call('createBlog')
+            ->assertHasErrors(['title' => 'required']);
 
         $this->assertDatabaseMissing('posts', [
             'content' => $input['content'],
@@ -50,21 +54,11 @@ class CreateBlogTest extends TestCase
 
     public function test_create_blog_unauthenticated(): void
     {
-        $input = [
-            'title' => 'title test',
-            'content' => 'content test',
-        ];
-
-        $response = $this->post(route('blog.createBlog'), $input);
+        $response = $this->get(route('blog.blogManagePage'));
 
         $response->assertRedirect(route('blog.blogPage'));
 
         $this->assertGuest();
         $response->assertSessionHas('url.intended');
-        $this->assertDatabaseMissing('posts', [
-            'title' => $input['title'],
-            'content' => $input['content'],
-        ]);
-
     }
 }

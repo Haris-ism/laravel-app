@@ -56,11 +56,6 @@ class BlogService
         session()->forget('pending_edits');
     }
 
-    public function getDataAll(int $perPage = 10): LengthAwarePaginator
-    {
-        return Post::with('author')->orderBy('created_at', 'desc')->paginate($perPage);
-    }
-
     public function getBlogDetailByTitle(string $title): Post
     {
         return Post::with('comments')->where('title', $title)->firstOrFail();
@@ -91,19 +86,19 @@ class BlogService
         session(['pending_edits' => $pending]);
     }
 
-    public function blogManagePage(): array
-    {
-        $data = Post::with('author')->orderBy('created_at', 'desc')->paginate(10);
-        $pending = session('pending_edits', []);
-
-        return [
-            'data' => $data,
-            'pending' => $pending,
-        ];
-    }
-
     public function getBlogById(int $id): Post
     {
         return Post::findOrFail($id);
+    }
+
+    public function blogSearch(string $search, int $perPage = 5): LengthAwarePaginator
+    {
+        $query = Post::with('author')->orderBy('created_at', 'desc');
+
+        if ($search) {
+            $query->whereLike('title', '%'.$search.'%', caseSensitive: false);
+        }
+
+        return $query->paginate($perPage);
     }
 }

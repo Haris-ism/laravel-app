@@ -17,10 +17,6 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/blog/manage', [BlogController::class, 'blogManagePage'])->name('blog.blogManagePage');
-    Route::post('/blog/create', [BlogController::class, 'createBlog'])->name('blog.createBlog');
-    Route::put('/blog/{id}', [BlogController::class, 'updateStage'])->name('blog.updateStage');
-    Route::delete('/blog/{id}', [BlogController::class, 'deleteBlog'])->name('blog.deleteBlog');
-    Route::post('/blog/batch-update', [BlogController::class, 'batchUpdate'])->name('blog.batchUpdate');
     Route::post('/blog/logout', [AuthController::class, 'logout'])->name('auth.logout');
 });
 
