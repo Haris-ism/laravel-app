@@ -37,17 +37,4 @@ class BlogController extends Controller
 
         return view('pages.detail', ['title' => $title, 'data' => $data]);
     }
-
-    public function batchUpdate()
-    {
-        try {
-            $this->service->batchUpdate();
-        } catch (QueryException $e) {
-            Log::error('batchUpdate query error: ', ['error:' => $e->getMessage()]);
-
-            return redirect()->route('blog.blogManagePage')->with('error', 'Something went wrong. Please try again.');
-        }
-
-        return redirect()->route('blog.blogManagePage')->with('status', 'Blog post updated');
-    }
 }

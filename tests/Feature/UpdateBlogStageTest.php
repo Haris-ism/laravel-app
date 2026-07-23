@@ -20,8 +20,8 @@ class UpdateBlogStageTest extends TestCase
         $user = User::factory()->create();
         $post = Post::factory()->create(['user_id' => $user->id]);
         $input = [
-            "edit.title.$post->id" => 'title test',
-            "edit.content.$post->id" => 'content test',
+            "edit.title.{$post->id}" => 'title test',
+            "edit.content.{$post->id}" => 'content test',
         ];
 
         $response = Livewire::actingAs($user)
@@ -31,8 +31,8 @@ class UpdateBlogStageTest extends TestCase
 
         $response->assertSessionHas('pending_edits.'.$post->id, [
             'id' => $post->id,
-            'title' => $input["edit.title.$post->id"],
-            'content' => $input["edit.content.$post->id"],
+            'title' => $input["edit.title.{$post->id}"],
+            'content' => $input["edit.content.{$post->id}"],
         ]);
     }
 
@@ -41,8 +41,8 @@ class UpdateBlogStageTest extends TestCase
         $user = User::factory()->create();
         $post = Post::factory()->create(['user_id' => $user->id]);
         $input = [
-            "edit.title.$post->id" => 'title test',
-            "edit.content.$post->id" => 'content test',
+            "edit.title.{$post->id}" => 'title test',
+            "edit.content.{$post->id}" => 'content test',
         ];
         $user2 = User::factory()->create();
 

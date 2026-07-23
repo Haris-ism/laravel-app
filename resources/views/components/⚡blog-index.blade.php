@@ -42,7 +42,11 @@ new class extends Component
     @if ($posts->isEmpty())
         <div class="text-center py-24">
             <div class="text-5xl mb-4">📭</div>
-            <p class="text-gray-400 font-medium">No posts yet.</p>
+            @if ($search !== '')
+                <p class="text-gray-400 font-medium">No blog found for "{{ $search }}"</p>
+            @else
+                <p class="text-gray-400 font-medium">No blog yet.</p>
+            @endif
         </div>
     @else
         <div class="space-y-4">
@@ -71,6 +75,6 @@ new class extends Component
             @endforeach
         </div>
         <!-- Pagination -->
-        <x-pagination :pagination="$posts" :disabled="$search !== ''"/>
+        <x-pagination :pagination="$posts"/>
     @endif
 </div>

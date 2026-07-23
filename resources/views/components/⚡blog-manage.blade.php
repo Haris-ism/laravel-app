@@ -194,12 +194,16 @@ new class extends Component
         <!-- Empty -->
         <div id="empty" class=" text-center py-32">
             <div class="text-5xl mb-4">📭</div>
-            <p class="text-gray-400 font-medium mb-4">No blogs yet.</p>
-            <button 
-                x-on:click="$dispatch('open-create-modal')"
-                class="px-5 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-700 transition-colors">
-                Create your first post
-            </button>
+            @if ($search !== '')
+                <p class="text-gray-400 font-medium mb-4">No blog found for "{{ $search }}"</p>
+            @else
+                <p class="text-gray-400 font-medium mb-4">No blog yet.</p>
+                <button
+                    x-on:click="$dispatch('open-create-modal')"
+                    class="px-5 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-700 transition-colors">
+                    Create your first post
+                </button>
+            @endif
         </div>
     @else
         <!-- Table -->
@@ -267,7 +271,7 @@ new class extends Component
         </div>
     @endif
 
-    <x-pagination :pagination="$data" :disabled="$search !== ''"/>
+    <x-pagination :pagination="$data"/>
 
     <!-- Save Button (fixed bottom right) -->
     <div class="fixed bottom-8 right-8 flex items-center gap-3">

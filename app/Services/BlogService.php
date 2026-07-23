@@ -96,7 +96,7 @@ class BlogService
         $query = Post::with('author')->orderBy('created_at', 'desc');
 
         if ($search) {
-            $query->where('title', 'ilike', "%{$search}%");
+            $query->whereLike('title', '%'.$search.'%', caseSensitive: false);
         }
 
         return $query->paginate($perPage);

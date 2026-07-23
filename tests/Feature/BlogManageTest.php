@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class BlogManageTest extends TestCase
@@ -33,5 +34,30 @@ class BlogManageTest extends TestCase
         $response->assertRedirect(route('blog.blogPage'));
         $this->assertGuest();
         $response->assertSessionHas('url.intended');
+    }
+
+    public function test_blog_manage_live_search(): void
+    {
+        $user = User::factory()->create();
+        Post::factory()->create(['title' => 'title test', 'content' => 'content test', 'user_id' => $user->id]);
+        Post::factory()->create(['title' => 'input test', 'content' => 'content test', 'user_id' => $user->id]);
+
+        Livewire::actingAs($user)
+            ->test('blog-manage')
+            ->set('search', 'title')
+            ->assertSee('title test')
+            ->assertDontSee('input test');
+    }
+
+    public function test_blog_manage_live_search_not_found(): void
+    {
+        $user = User::factory()->create();
+        Post::factory()->create(['title' => 'title test', 'content' => 'content test', 'user_id' => $user->id]);
+
+        Livewire::actingAs($user)
+            ->test('blog-manage')
+            ->set('search', 'something')
+            ->assertSee('No blog found for "something"', false)
+            ->assertDontSee('No blog yet');
     }
 }

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Post;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class BlogPageTest extends TestCase
@@ -30,6 +31,27 @@ class BlogPageTest extends TestCase
         $response = $this->get(route('blog.blogPage'));
 
         $response->assertOk();
-        $response->assertSee('No posts yet');
+        $response->assertSee('No blog yet');
+    }
+
+    public function test_blog_page_live_search(): void
+    {
+        Post::factory()->create(['title' => 'title test', 'content' => 'content test']);
+        Post::factory()->create(['title' => 'input test', 'content' => 'content test']);
+
+        Livewire::test('blog-index')
+            ->set('search', 'title')
+            ->assertSee('title test')
+            ->assertDontSee('input test');
+    }
+
+    public function test_blog_page_live_search_no_results(): void
+    {
+        Post::factory()->create(['title' => 'title test', 'content' => 'content test']);
+
+        Livewire::test('blog-index')
+            ->set('search', 'something')
+            ->assertSee('No blog found for "something"', false)
+            ->assertDontSee('No blog yet');
     }
 }
