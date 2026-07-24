@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\PostPublished;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -13,7 +14,11 @@ class BlogService
     {
         User::findOrFail($data['user_id']);
 
-        return Post::create($data);
+        $post = Post::create($data);
+
+        PostPublished::dispatch($post);
+
+        return $post;
     }
 
     public function deleteBlog(Post $post): bool

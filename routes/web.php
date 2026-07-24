@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +19,10 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/blog/manage', [BlogController::class, 'blogManagePage'])->name('blog.blogManagePage');
     Route::post('/blog/logout', [AuthController::class, 'logout'])->name('auth.logout');
+});
+
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin', [AdminController::class, 'getusers'])->name('admin.getUsers');
 });
 
 Route::get('/blog/{title}', [BlogController::class, 'blogDetailPage'])->name('blog.blogDetailPage');
