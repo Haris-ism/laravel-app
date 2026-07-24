@@ -24,21 +24,10 @@ class StageUpdateBlogRequest extends FormRequest
      */
     public function rules(): array
     {
-        $id = $this->route('id');
-
         return [
-            "edit.title.$id" => 'required|string|max:255',
-            "edit.content.$id" => 'required|string',
-        ];
-    }
-
-    public function attributes(): array
-    {
-        $id = $this->route('id');
-
-        return [
-            "edit.title.$id" => 'title',
-            "edit.content.$id" => 'content',
+            'id' => 'required|integer',
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
         ];
     }
 }
